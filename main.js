@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.1
+// @version      0.2.1
 // @description  dye recommended discarding tile with tenhou/2
 // @author       Fr0stbyteR
 // @match        https://majsoul.union-game.com/0/
