@@ -1,5 +1,5 @@
 # 雀魂麻将牌效辅助 ![License](https://img.shields.io/github/license/Fr0stbyteR/majsoul-helper.svg)
-> 使用天凤牌理规则，根据牌效将推荐的两枚切牌染色。
+> 使用天凤牌理规则，根据牌效将推荐的两枚切牌染色。(无视牌河)
 
 > 挤房间功能
 
