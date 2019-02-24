@@ -1002,7 +1002,7 @@
                     for (const operation of operations.operation_list) {
                         if (operation.type == 7) {
                             console.log("Riichi");
-                            iew.DesktopMgr.Inst.mainrole.during_liqi = true;
+                            view.DesktopMgr.Inst.mainrole.during_liqi = true;
                         }
                     }
                 }
