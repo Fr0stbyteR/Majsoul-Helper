@@ -823,6 +823,7 @@
         constructor() {
             this.reset();
             this.inject();
+            this.injectUI();
         }
         reset() {
             this.auto = false;
@@ -846,6 +847,134 @@
             }, 1000);
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
             // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
+        }
+        injectUI () {
+            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
+            console.log("Majsoul UIScript injected.")
+            let e = uiscript;
+            let o = uiscript.UI_DesktopInfo;
+            uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
+                void 0 === e && (e = !1);
+                view.DesktopMgr.Inst.seat;
+                for (var t = view.DesktopMgr.Inst.player_datas, i = 0; i < 4; i++) {
+                    var n = view.DesktopMgr.Inst.localPosition2Seat(i),
+                        a = this._player_infos[i];
+                    if (n < 0) a.container.visible = !1;
+                    else {
+                        if (a.container.visible = !0,
+                            a.name.text = t[n].nickname,
+                            a.head.id = t[n].avatar_id,
+                            a.avatar = t[n].avatar_id,
+                            a.head.setEmo(""),
+                            a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
+                            a.level.id = t[n].level.id,
+                            0 != i) {
+                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
+                                o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
+                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
+                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
+                        }
+                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
+                    }
+                }
+            }
+            for (let i = 5; i <= 8; i++) {
+                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
+                    type: "Image",
+                    props: {
+                        y: -10,
+                        x: -10,
+                        name: "level",
+                        scaleY: .5,
+                        scaleX: .5
+                    },
+                    child: [{
+                        type: "Image",
+                        props: {
+                            y: 0,
+                            x: 0,
+                            skin: "myres/rank_bg.png",
+                            name: "bg"
+                        }
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 15,
+                            x: 0,
+                            skin: "extendRes/level/queshi.png",
+                            name: "icon"
+                        }
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 191,
+                            x: 58,
+                            skin: "myres/starbg.png",
+                            scaleY: 1,
+                            scaleX: 1,
+                            name: "star2",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
+                        child: [{
+                            type: "Image",
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 142,
+                            x: 29,
+                            skin: "myres/starbg.png",
+                            scaleY: .7,
+                            scaleX: .7,
+                            name: "star3",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
+                        child: [{
+                            type: "Image",
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 214,
+                            x: 110,
+                            skin: "myres/starbg.png",
+                            scaleY: .7,
+                            scaleX: .7,
+                            name: "star1",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
+                        child: [{
+                            type: "Image",
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
+                        }]
+                    }]
+                }
+    
+            }
+            return true;
         }
         handToString() {
             const handIn = view.DesktopMgr.Inst.mainrole.hand;

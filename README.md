@@ -5,7 +5,10 @@
 
 > 自动打牌功能
 
-  ![Demo](./example.png)
+> 显示玩家段位
+
+  ![Demo](./example1.png)
+  ![Demo](./example2.png)
 
 ### 安装方法
 - 安装油猴脚本 TamperMonkey 
