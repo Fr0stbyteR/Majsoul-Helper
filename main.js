@@ -10,7 +10,7 @@
 
 (function () {
     'use strict';
-    
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // TENHOU.NET (C)C-EGG http://tenhou.net/
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@
         expand: function (t) {
             return t
                 .replace(/(\d)(\d{0,8})(\d{0,8})(\d{0,8})(\d{0,8})(\d{0,8})(\d{0,8})(\d{8})(m|p|s|z)/g, "$1$9$2$9$3$9$4$9$5$9$6$9$7$9$8$9")
-                .replace(/(\d?)(\d?)(\d?)(\d?)(\d?)(\d?)(\d)(\d)(m|p|s|z)/g, "$1$9$2$9$3$9$4$9$5$9$6$9$7$9$8$9") // 57���A�������
+                .replace(/(\d?)(\d?)(\d?)(\d?)(\d?)(\d?)(\d)(\d)(m|p|s|z)/g, "$1$9$2$9$3$9$4$9$5$9$6$9$7$9$8$9") // 57???A???????
                 .replace(/(m|p|s|z)(m|p|s|z)+/g, "$1")
                 .replace(/^[^\d]/, "");
         },
@@ -841,12 +841,84 @@
                         return m(e);
                     };
                 }
+                helper = this;
+                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
+                view.DesktopMgr.Inst.setChoosedPai = function (e) {
+                    view.DesktopMgr.Inst._setChoosedPai(e);
+                    if (e !== null){
+                        helper.warningDiscards(e);
+                    }
+                }
+
             } else setTimeout(() => {
                 // console.log("Majsoul Helper waiting...");
                 this.inject();
             }, 1000);
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
             // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
+        }
+        warningDiscards(spai){
+            for (var i = 1; i <=3; i++){
+                var player = view.DesktopMgr.Inst.players[i];
+				for (const pair of player.container_qipai.pais){
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
+				}
+                for (const pair of player.container_ming.pais){
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
+                }
+                const lastpai =player.container_qipai.last_pai;
+                if (lastpai !== null){
+                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, lastpai));
+                }
+			}
+            var self = view.DesktopMgr.Inst.players[0];
+            for (const pair of self.container_qipai.pais){
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
+            }
+            for (const pair of self.container_ming.pais){
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
+            }
+            const lastpai =self.container_qipai.last_pai;
+            if (lastpai !== null){
+                lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, lastpai));
+            }
+           //const handIn = view.DesktopMgr.Inst.mainrole.hand;
+           // for (const tile of handIn) {
+           //   tile._SetColor(this.waringColorSelf(spai, tile.val));
+           //}
+        }
+        waringColor(a, bmodel){
+            var b = bmodel.val;
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            if (a.type !== b.type) return defaultColor;
+            var c = Math.abs(a.index-b.index);
+            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
+            if (a.type != 3){
+                if (c == 3) {
+                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1,0.8,0.8,1);
+                    return new Laya.Vector4(1,0.5,0.5,1);
+                }
+                if (a.index <=7 && a.index >= 3){
+                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                } else if (a.index > 7){
+                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+            }
+            return  defaultColor;
+        }
+        waringColorSelf(a, bmodel){//自己只考虑壁
+            var b = bmodel.val;
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            if (a.type !== b.type) return defaultColor;
+            var c = Math.abs(a.index-b.index);
+            if (a.type != 3){
+                if (a.index <=7 && a.index >= 3){
+                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                } else if (a.index > 7){
+                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+            }
+            return  defaultColor;
         }
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
@@ -972,7 +1044,7 @@
                         }]
                     }]
                 }
-    
+
             }
             return true;
         }
@@ -996,6 +1068,16 @@
                     }
                 }, 2000)
             }
+            if (action.moqie){
+                var dtile =null;
+                for (var j = 0; j < 4; j++){
+                    if (view.DesktopMgr.Inst.players[j].seat == action.seat) {
+                        dtile = view.DesktopMgr.Inst.players[j].container_qipai.last_pai;
+                    }
+                }
+                dtile.ismoqie = true;
+                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.7,0.7,0.7,0.7));
+            }
             if (action.hasOwnProperty("operation")) {
                 const operations = action.operation;
                 if (this.auto) {
@@ -1012,25 +1094,67 @@
                         const optionsIn = this.analyseHand(handTiles);
                         const options = [];
                         optionsIn.forEach(option => option && option.n ? options.push(option) : null);
-                        let discard = handTiles.slice(-2, 2);
-                        let discard2 = discard;
+                        //let discard = handTiles.slice(-2, 2);
+                       // let discard2 = discard;
+
+                        this.handleDiscards(options);
+
                         options.sort((a, b) => b.n - a.n);
                         // console.log(JSON.stringify(options));
-                        if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
-                        if (options[1]) discard2 = tenhou.MPSZ.fromHai136(options[1].da * 4 + 1);
-                        this.getFromHand(discard).forEach(tile => {
-                            tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1));
-                            setTimeout(() => tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1)), 750);
+                        var maxn = options[0].n;
+                        for (var i=0;i<options.length;i++){
+                            if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
+                            var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
+                            const color = 3.7 - 3.5 * options[i].n / maxn;
+                             this.getFromHand(discard).forEach(tile => {
+                            tile._SetColor(new Laya.Vector4(color, 1, color, 1));
+                            setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
                         });
-                        this.getFromHand(discard2).forEach(tile => {
-                            tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1));
-                            setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1)), 750);
-                        });
-                        console.log(handTiles + " => " + discard);
-                        if (this.auto) this.discard(discard);
+                        }
+
+                        //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
+                        //if (options[1]) discard2 = tenhou.MPSZ.fromHai136(options[1].da * 4 + 1);
+                        //this.getFromHand(discard).forEach(tile => {
+                        //    tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1));
+                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1)), 750);
+                        //});
+                        //this.getFromHand(discard2).forEach(tile => {
+                        //    tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1));
+                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1)), 750);
+                        //});
+                        //console.log(handTiles + " => " + discard);
+                        if (this.auto) this.discard(tenhou.MPSZ.fromHai136(options[0].da * 4 + 1));
                     }
                 }
             }
+        }
+
+        handleDiscards(options){
+            var dic = {};
+            for (const player of view.DesktopMgr.Inst.players){
+				for (const pair of player.container_qipai.pais){
+					const str = pair.val.toString();
+					if (dic[str] === undefined) dic[str] = 1;
+					else dic[str]++;
+				}
+                const lastpai =player.container_qipai.last_pai;
+                if (lastpai !== null) {
+                    const str = lastpai.val.toString();
+					if (dic[str] === undefined) dic[str] = 1;
+					else dic[str]++;
+                }
+                for (const pair of player.container_ming.pais){
+					const str = pair.val.toString();
+					if (dic[str] === undefined) dic[str] = 1;
+					else dic[str]++;
+				}
+			}
+			for (const opt of options){
+				for (const v of opt.v){
+                    const vs = tenhou.MPSZ.fromHai136(v * 4 + 1);
+					if (dic[vs] !== undefined) opt.n -= dic[vs];
+				}
+			}
         }
         analyseHand(tilesIn) {
             const restc = (tiles, c34) => {
