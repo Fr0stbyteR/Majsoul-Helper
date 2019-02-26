@@ -10,9 +10,13 @@
   ![Demo](./example1.png)
   ![Demo](./example2.png)
 
-### 安装方法
+### 安装方法 - 浏览器
 - 安装油猴脚本 TamperMonkey 
 - 导入 **main.js** 或打开 [此链接](https://greasyfork.org/zh-CN/scripts/378059-majsoul-helper) 安装脚本
+
+### 安装方法 - Majsoul Plus
+- 在resources\app\execute中新建文件夹
+- 将execute.json和main.js文件复制到该文件夹
 
 ### 使用方法
 - 牌效染色默认开启
