@@ -1,0 +1,6 @@
+{
+  "name": "科学麻将助手",
+  "author": "Fr0stbyteR",
+  "description": "帮助有眼疾的科学麻将选手看清场况、理性打牌",
+  "entry": "main.js"
+}
