@@ -841,16 +841,13 @@
                         return m(e);
                     };
                 }
-                helper = this;
-                /*
+                
                 view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
-                view.DesktopMgr.Inst.setChoosedPai = function (e) {
-                    view.DesktopMgr.Inst._setChoosedPai(e);
-                    if (e !== null){
-                        helper.warningDiscards(e);
-                    }
+                view.DesktopMgr.Inst.setChoosedPai = (e) => {
+                    const r = view.DesktopMgr.Inst._setChoosedPai(e);
+                    if (e !== null) this.warningDiscards(e);
+                    return r;
                 }
-                */
             } else setTimeout(() => {
                 // console.log("Majsoul Helper waiting...");
                 this.inject();
@@ -888,36 +885,36 @@
            //   tile._SetColor(this.waringColorSelf(spai, tile.val));
            //}
         }
-        warningColor(a, bmodel){
+        warningColor(a, bmodel) {
             var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
+            if (c == 0 ) return  new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
                 if (c == 3) {
-                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1,0.8,0.8,1);
-                    return new Laya.Vector4(1,0.5,0.5,1);
+                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
+                    return new Laya.Vector4(1, 0.5, 0.5, 1);
                 }
                 if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                    if (c == 1) return new Laya.Vector4(1, 1, 0.7, 1);
                 } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                    if (a.index - b.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
             }
             return  defaultColor;
         }
-        warningColorSelf(a, bmodel){//自己只考虑壁
+        warningColorSelf(a, bmodel) { // 自己只考虑壁
             var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
             if (a.type != 3){
                 if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                    if (c == 1) return new Laya.Vector4(1, 1, 0.7, 1);
                 } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                    if (a.index - b.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
             }
             return  defaultColor;
         }
