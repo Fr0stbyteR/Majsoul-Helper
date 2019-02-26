@@ -842,7 +842,9 @@
                     };
                 }
                 helper = this;
+                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
                 view.DesktopMgr.Inst.setChoosedPai = function (e) {
+                    view.DesktopMgr.Inst._setChoosedPai(e);
                     if (e !== null){
                         helper.warningDiscards(e);
                     }
@@ -859,27 +861,64 @@
             for (var i = 1; i <=3; i++){
                 var player = view.DesktopMgr.Inst.players[i];
 				for (const pair of player.container_qipai.pais){
-                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair.val));
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
 				}
+                for (const pair of player.container_ming.pais){
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
+                }
                 const lastpai =player.container_qipai.last_pai;
                 if (lastpai !== null){
-                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, lastpai.val));
+                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, lastpai));
                 }
 			}
-        }
-        waringColor(a, b){
-            if (a.type !== b.type) return new Laya.Vector4(1,1,1,1);
-            var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.4,0.4,1,1);
-            if (a.type != 3){
-                if (c == 3) return new Laya.Vector4(0.6,0.6,1,1);
-                if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(0.8,0.8,1,1);
-                } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(0.7,0.7,1,1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(0.7,0.7,1,1);
+            var self = view.DesktopMgr.Inst.players[0];
+            for (const pair of self.container_qipai.pais){
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
             }
-            return  new Laya.Vector4(1,1,1,1);
+            for (const pair of self.container_ming.pais){
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
+            }
+            const lastpai =self.container_qipai.last_pai;
+            if (lastpai !== null){
+                lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, lastpai));
+            }
+           //const handIn = view.DesktopMgr.Inst.mainrole.hand;
+           // for (const tile of handIn) {
+           //   tile._SetColor(this.waringColorSelf(spai, tile.val));
+           //}
+        }
+        waringColor(a, bmodel){
+            var b = bmodel.val;
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            if (a.type !== b.type) return defaultColor;
+            var c = Math.abs(a.index-b.index);
+            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
+            if (a.type != 3){
+                if (c == 3) {
+                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1,0.8,0.8,1);
+                    return new Laya.Vector4(1,0.5,0.5,1);
+                }
+                if (a.index <=7 && a.index >= 3){
+                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                } else if (a.index > 7){
+                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+            }
+            return  defaultColor;
+        }
+        waringColorSelf(a, bmodel){//自己只考虑壁
+            var b = bmodel.val;
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
+            if (a.type !== b.type) return defaultColor;
+            var c = Math.abs(a.index-b.index);
+            if (a.type != 3){
+                if (a.index <=7 && a.index >= 3){
+                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
+                } else if (a.index > 7){
+                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
+                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
+            }
+            return  defaultColor;
         }
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
@@ -1029,6 +1068,16 @@
                     }
                 }, 2000)
             }
+            if (action.moqie){
+                var dtile =null;
+                for (var j = 0; j < 4; j++){
+                    if (view.DesktopMgr.Inst.players[j].seat == action.seat) {
+                        dtile = view.DesktopMgr.Inst.players[j].container_qipai.last_pai;
+                    }
+                }
+                dtile.ismoqie = true;
+                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.7,0.7,0.7,0.7));
+            }
             if (action.hasOwnProperty("operation")) {
                 const operations = action.operation;
                 if (this.auto) {
@@ -1094,6 +1143,11 @@
 					if (dic[str] === undefined) dic[str] = 1;
 					else dic[str]++;
                 }
+                for (const pair of player.container_ming.pais){
+					const str = pair.val.toString();
+					if (dic[str] === undefined) dic[str] = 1;
+					else dic[str]++;
+				}
 			}
 			for (const opt of options){
 				for (const v of opt.v){
