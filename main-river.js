@@ -1055,14 +1055,14 @@
                         options.sort((a, b) => b.n - a.n);
                         // console.log(JSON.stringify(options));
                         var maxn = options[0].n;
-                        for (var i=0;i<options.length;i++){
+                        for (var i = 0; i < options.length; i++){
                             if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
                             var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
                             const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
                             this.getFromHand(discard).forEach(tile => {
-                            tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                            setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                        });
+                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
+                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
+                            });
                         }
 
                         //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
@@ -1090,7 +1090,7 @@
 					if (dic[str] === undefined) dic[str] = 1;
 					else dic[str]++;
 				}
-                const lastpai =player.container_qipai.last_pai;
+                const lastpai = player.container_qipai.last_pai;
                 if (lastpai !== null) {
                     const str = lastpai.val.toString();
 					if (dic[str] === undefined) dic[str] = 1;
