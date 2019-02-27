@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Majsoul Helper
+// @name         Majsoul Helper + River Indication
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.2
-// @description  dye recommended discarding tile with tenhou/2
-// @author       Fr0stbyteR
+// @version      0.2.3
+// @description  dye recommended discarding tile with tenhou/2 + River tiles indication
+// @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
 // ==/UserScript==
@@ -864,7 +864,7 @@
                 for (const pair of player.container_ming.pais){
                     pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, pair));
                 }
-                const lastpai =player.container_qipai.last_pai;
+                const lastpai = player.container_qipai.last_pai;
                 if (lastpai !== null){
                     lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, lastpai));
                 }
@@ -896,11 +896,20 @@
                     if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
                     return new Laya.Vector4(1, 0.5, 0.5, 1);
                 }
-                if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1, 1, 0.7, 1);
+                if (a.index <=7 && a.index >= 3){ // 对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
+                     if (c == 1) return new Laya.Vector4(1, 1, 0.5, 1);
+                     if (c == 2) return new Laya.Vector4(1, 1, 0.8, 1);
                 } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
+                    if (a.index == 8) { // 对于8，7成的壁最有用，6和9效果等同但较差
+                        if (b.index == 7) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于9，7和8的效果等同。
+                } else {
+                    if (a.index == 2) { // 对于2，3成的壁最有用，1和4效果等同但较差
+                        if (b.index == 3) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 1 || b.index == 4) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于1，2和3的效果等同。
+                }
             }
             return  defaultColor;
         }
@@ -910,13 +919,22 @@
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
             if (a.type != 3){
-                if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1, 1, 0.7, 1);
+                if (a.index <= 7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
+                    if (c == 1) return new Laya.Vector4(1, 1, 0.5, 1);
+                    if (c == 2) return new Laya.Vector4(1, 1, 0.8, 1);
                 } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1, 1, 0.2, 1);
+                    if (a.index == 8) { // 对于8，7成的壁最有用，6和9效果等同但较差
+                        if (b.index == 7) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于9，7和8的效果等同。
+                } else {
+                    if (a.index == 2) { // 对于2，3成的壁最有用，1和4效果等同但较差
+                        if (b.index == 3) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 1 || b.index == 4) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于1，2和3的效果等同。
+                }
             }
-            return  defaultColor;
+            return defaultColor;
         }
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);

@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.2
+// @version      0.2.3
 // @description  dye recommended discarding tile with tenhou/2
-// @author       Fr0stbyteR
+// @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
 // ==/UserScript==
@@ -857,69 +857,6 @@
             }, 1000);
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
             // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
-        }
-        warningDiscards(spai){
-            for (var i = 1; i <=3; i++){
-                var player = view.DesktopMgr.Inst.players[i];
-				for (const pair of player.container_qipai.pais){
-                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, pair));
-				}
-                for (const pair of player.container_ming.pais){
-                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, pair));
-                }
-                const lastpai =player.container_qipai.last_pai;
-                if (lastpai !== null){
-                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, lastpai));
-                }
-			}
-            var self = view.DesktopMgr.Inst.players[0];
-            for (const pair of self.container_qipai.pais){
-                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, pair));
-            }
-            for (const pair of self.container_ming.pais){
-                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, pair));
-            }
-            const lastpai =self.container_qipai.last_pai;
-            if (lastpai !== null){
-                lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, lastpai));
-            }
-           //const handIn = view.DesktopMgr.Inst.mainrole.hand;
-           // for (const tile of handIn) {
-           //   tile._SetColor(this.waringColorSelf(spai, tile.val));
-           //}
-        }
-        warningColor(a, bmodel){
-            var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
-            if (a.type !== b.type) return defaultColor;
-            var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
-            if (a.type != 3){
-                if (c == 3) {
-                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1,0.8,0.8,1);
-                    return new Laya.Vector4(1,0.5,0.5,1);
-                }
-                if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
-                } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
-            }
-            return  defaultColor;
-        }
-        warningColorSelf(a, bmodel){//自己只考虑壁
-            var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.7,0.7,0.7,0.7) : new Laya.Vector4(1,1,1,1);
-            if (a.type !== b.type) return defaultColor;
-            var c = Math.abs(a.index-b.index);
-            if (a.type != 3){
-                if (a.index <=7 && a.index >= 3){
-                    if (c == 1) return new Laya.Vector4(1,1,0.7,1);
-                } else if (a.index > 7){
-                    if (a.index - b.index == 1) return new Laya.Vector4(1,1,0.2,1);
-                } else if (b.index - a.index == 1) return new Laya.Vector4(1,1,0.2,1);
-            }
-            return  defaultColor;
         }
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
