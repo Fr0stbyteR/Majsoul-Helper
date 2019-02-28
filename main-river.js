@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.3
+// @version      0.2.1
 // @description  dye recommended discarding tile with tenhou/2
-// @author       Fr0stbyteR, FlyingBamboo
+// @author       Fr0stbyteR
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
 // ==/UserScript==
@@ -841,7 +841,6 @@
                         return m(e);
                     };
                 }
-                /*
                 helper = this;
                 view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
                 view.DesktopMgr.Inst.setChoosedPai = function (e) {
@@ -850,7 +849,7 @@
                         helper.warningDiscards(e);
                     }
                 }
-                */
+
             } else setTimeout(() => {
                 // console.log("Majsoul Helper waiting...");
                 this.inject();
@@ -858,7 +857,6 @@
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
             // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
         }
-<<<<<<< HEAD
         warningDiscards(spai){
             for (var i = 1; i <=3; i++){
                 var player = view.DesktopMgr.Inst.players[i];
@@ -917,11 +915,12 @@
             }
             return  defaultColor;
         }
-        waringColorSelf(a, bmodel){//自己只考虑壁
+        waringColorSelf(a, bmodel){//自己只考虑壁候选和现物
             var b = bmodel.val;
             var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8,0.8,0.8,1) : new Laya.Vector4(1,1,1,1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
+            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
             if (a.type != 3){
                 if (a.index <=7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
                     if (c == 1) return new Laya.Vector4(1,1,0.5,1);
@@ -940,8 +939,6 @@
             }
             return  defaultColor;
         }
-=======
->>>>>>> 9b3b65156b76af7421c66b28b8596879dee44e6c
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
             console.log("Majsoul UIScript injected.")
@@ -975,32 +972,95 @@
             for (let i = 5; i <= 8; i++) {
                 ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
                     type: "Image",
-                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
+                    props: {
+                        y: -10,
+                        x: -10,
+                        name: "level",
+                        scaleY: .5,
+                        scaleX: .5
+                    },
                     child: [{
                         type: "Image",
-                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
-                    }, {
-                        type: "Image",
-                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
+                        props: {
+                            y: 0,
+                            x: 0,
+                            skin: "myres/rank_bg.png",
+                            name: "bg"
+                        }
                     }, {
                         type: "Image",
                         props: {
-                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
+                            y: 15,
+                            x: 0,
+                            skin: "extendRes/level/queshi.png",
+                            name: "icon"
+                        }
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 191,
+                            x: 58,
+                            skin: "myres/starbg.png",
+                            scaleY: 1,
+                            scaleX: 1,
+                            name: "star2",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
                         child: [{
                             type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
                         }]
                     }, {
                         type: "Image",
-                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
+                        props: {
+                            y: 142,
+                            x: 29,
+                            skin: "myres/starbg.png",
+                            scaleY: .7,
+                            scaleX: .7,
+                            name: "star3",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
                         child: [{
                             type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
                         }]
                     }, {
                         type: "Image",
-                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
-                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
+                        props: {
+                            y: 214,
+                            x: 110,
+                            skin: "myres/starbg.png",
+                            scaleY: .7,
+                            scaleX: .7,
+                            name: "star1",
+                            anchorY: .5,
+                            anchorX: .5
+                        },
+                        child: [{
+                            type: "Image",
+                            props: {
+                                y: 26,
+                                x: 27,
+                                skin: "myres/star.png",
+                                anchorY: .5,
+                                anchorX: .5
+                            }
+                        }]
                     }]
                 }
 
@@ -1035,11 +1095,7 @@
                     }
                 }
                 dtile.ismoqie = true;
-<<<<<<< HEAD
                 dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8,0.8,0.8,1));
-=======
-                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
->>>>>>> 9b3b65156b76af7421c66b28b8596879dee44e6c
             }
             if (action.hasOwnProperty("operation")) {
                 const operations = action.operation;
@@ -1057,22 +1113,22 @@
                         const optionsIn = this.analyseHand(handTiles);
                         const options = [];
                         optionsIn.forEach(option => option && option.n ? options.push(option) : null);
-                        // let discard = handTiles.slice(-2, 2);
-                        // let discard2 = discard;
+                        //let discard = handTiles.slice(-2, 2);
+                       // let discard2 = discard;
 
                         this.handleDiscards(options);
 
                         options.sort((a, b) => b.n - a.n);
                         // console.log(JSON.stringify(options));
                         var maxn = options[0].n;
-                        for (var i = 0; i < options.length; i++){
+                        for (var i=0;i<options.length;i++){
                             if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
                             var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                            this.getFromHand(discard).forEach(tile => {
-                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                            });
+                            const color = 3.7 - 3.5 * options[i].n / maxn;
+                             this.getFromHand(discard).forEach(tile => {
+                            tile._SetColor(new Laya.Vector4(color, 1, color, 1));
+                            setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
+                        });
                         }
 
                         //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
@@ -1100,7 +1156,7 @@
 					if (dic[str] === undefined) dic[str] = 1;
 					else dic[str]++;
 				}
-                const lastpai = player.container_qipai.last_pai;
+                const lastpai =player.container_qipai.last_pai;
                 if (lastpai !== null) {
                     const str = lastpai.val.toString();
 					if (dic[str] === undefined) dic[str] = 1;
@@ -1239,12 +1295,54 @@
         }
     }
     window.getCharacter = () => {
-        uiscript.UI_Sushe.characters[2] = { charid: 200003, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400301 };
-        uiscript.UI_Sushe.characters[3] = { charid: 200004, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400401 };
-        uiscript.UI_Sushe.characters[4] = { charid: 200005, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400501 };
-        uiscript.UI_Sushe.characters[5] = { charid: 200006, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400601 };
-        uiscript.UI_Sushe.characters[6] = { charid: 200007, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400701 };
-        uiscript.UI_Sushe.characters[7] = { charid: 200008, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400801 };
+        uiscript.UI_Sushe.characters[2] = {
+            charid: 200003,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400301
+        };
+        uiscript.UI_Sushe.characters[3] = {
+            charid: 200004,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400401
+        };
+        uiscript.UI_Sushe.characters[4] = {
+            charid: 200005,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400501
+        };
+        uiscript.UI_Sushe.characters[5] = {
+            charid: 200006,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400601
+        }
+        uiscript.UI_Sushe.characters[6] = {
+            charid: 200007,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400701
+        }
+        uiscript.UI_Sushe.characters[7] = {
+            charid: 200008,
+            exp: 20000,
+            extra_emoji: [13],
+            is_upgraded: true,
+            level: 5,
+            skin: 400801
+        };
     }
     // Events overRiding
     // Operations : 0 = "none", 1 = "dapai", 2 = "eat", 3 = "peng", 4 = "an_gang", 5 = "ming_gang", 6 = "add_gang", 7 = "liqi", 8 = "zimo", 9 = "rong", 10 = "jiuzhongjiupai", 11 = "babei"
