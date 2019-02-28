@@ -841,10 +841,10 @@
                         return m(e);
                     };
                 }
-                
-                const m = view.DesktopMgr.Inst.setChoosedPai.bind(view.DesktopMgr.Inst);
+
+                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
                 view.DesktopMgr.Inst.setChoosedPai = (e) => {
-                    const r = m(e);
+                    const r = view.DesktopMgr.Inst._setChoosedPai(e);
                     if (e !== null) this.warningDiscards(e);
                     return r;
                 }
@@ -1052,17 +1052,32 @@
 
                         this.handleDiscards(options);
 
+                        options.sort((a, b) => b.m - a.m);
+                        var maxm = options[0].m;
+
                         options.sort((a, b) => b.n - a.n);
-                        // console.log(JSON.stringify(options));
                         var maxn = options[0].n;
+
+                        // console.log(JSON.stringify(options));
+                        // console.log("maxm " + maxm);
+                        // console.log("maxn " + maxn);
+
                         for (var i = 0; i < options.length; i++){
-                            if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
+                            if ((options[i].n < maxn * 0.5 && i > 0) || options[i].n == 0) break;
                             var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                            this.getFromHand(discard).forEach(tile => {
-                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                            });
+                            if ((options[i].m = maxm) && (options[i].m != options[0].m) && (options[i].n < maxn)) {
+                                this.getFromHand(discard).forEach(tile => {
+                                    tile._SetColor(new Laya.Vector4(0.8, 0.3, 0.3, 1));
+                                    setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 0.3, 0.3, 1)), 750);
+                                });
+                            }
+                            else {
+                                const color = Math.pow(1.8 - 1.6 * options[i].n / maxn, 0.5);
+                                this.getFromHand(discard).forEach(tile => {
+                                    tile._SetColor(new Laya.Vector4(color, 1, color, 1));
+                                    setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
+                                });
+                            }
                         }
 
                         //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
@@ -1120,6 +1135,8 @@
             const c = tenhou.MPSZ.exextract34(tiles);
             const syanten_org = tenhou.SYANTEN.calcSyanten2(c, 34)[0];
             const options = new Array(35);
+            const nextjzoptions = new Array(35);
+            const nextgloptions = new Array(35);
             if (syanten_org == -1)
                 console.log("agari");
             if (syanten_org == 0) {
@@ -1151,17 +1168,43 @@
                         continue;
                     c[i]--; // 打
                     options[i] = [];
+                    let nextjz = 0; // 次轮进张数
+                    let nextgl = 0; // 次轮改良数
                     for (let j = 0; j < 34; ++j) {
                         if (i == j || c[j] >= 4)
                             continue;
                         c[j]++; // 摸
-                        if (tenhou.SYANTEN.calcSyanten2(c, 34)[0] == syanten_org - 1)
+                        if (tenhou.SYANTEN.calcSyanten2(c, 34)[0] == syanten_org - 1) {
                             options[i].push(j);
+                            for (let k = 0; k < 34; ++k) {
+                                if (!c[k])
+                                    continue;
+                                c[k]--; // 打
+                                nextjzoptions[k] = [];
+                                nextgloptions[k] = [];
+                                for (let l = 0; l < 34; ++l) {
+                                    if (k == l || c[l] >= 4)
+                                        continue;
+                                    c[l]++; // 摸
+                                    if (tenhou.SYANTEN.calcSyanten2(c, 34)[0] == syanten_org - 2) {
+                                        nextjzoptions[k].push(l);
+                                    }
+                                    else {
+                                        nextgloptions[k].push(l);
+                                    }
+                                    c[l]--;
+                                }
+                                c[k]++;
+                                nextjz += restc(nextjzoptions[k], c);
+                                nextgl += restc(nextgloptions[k], c);
+                            }
+                        }
                         c[j]--;
                     }
                     c[i]++;
-                    if (options[i].length)
-                        options[i] = { da: i, n: restc(options[i], c), v: options[i] };
+                    if (options[i].length) {
+                        options[i] = { da: i, m: restc(options[i], c), n: nextjz * nextgl / 1000, v: options[i] };
+                    }
                 }
             }
             return options;
