@@ -890,7 +890,7 @@
             var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5, 0.5, 1, 1);
+            if (c == 0 ) return new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
                 if (c == 3) {
                     if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
@@ -913,11 +913,12 @@
             }
             return  defaultColor;
         }
-        warningColorSelf(a, bmodel) { // 自己只考虑壁
+        warningColorSelf(a, bmodel) { // 自己只考虑壁候选牌以及现物
             var b = bmodel.val;
             var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
+            if (c == 0 ) return new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
                 if (a.index <= 7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
                     if (c == 1) return new Laya.Vector4(1, 1, 0.5, 1);
