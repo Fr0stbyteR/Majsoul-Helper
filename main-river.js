@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Majsoul Helper
+// @name         Majsoul Helper + River Indication
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.1
-// @description  dye recommended discarding tile with tenhou/2
-// @author       Fr0stbyteR
+// @version      0.2.3
+// @description  dye recommended discarding tile with tenhou/2 + River tiles indication
+// @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
 // ==/UserScript==
@@ -841,15 +841,13 @@
                         return m(e);
                     };
                 }
-                helper = this;
-                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
-                view.DesktopMgr.Inst.setChoosedPai = function (e) {
-                    view.DesktopMgr.Inst._setChoosedPai(e);
-                    if (e !== null){
-                        helper.warningDiscards(e);
-                    }
+                
+                const m = view.DesktopMgr.Inst.setChoosedPai.bind(view.DesktopMgr.Inst);
+                view.DesktopMgr.Inst.setChoosedPai = (e) => {
+                    const r = m(e);
+                    if (e !== null) this.warningDiscards(e);
+                    return r;
                 }
-
             } else setTimeout(() => {
                 // console.log("Majsoul Helper waiting...");
                 this.inject();
@@ -861,61 +859,61 @@
             for (var i = 1; i <=3; i++){
                 var player = view.DesktopMgr.Inst.players[i];
 				for (const pair of player.container_qipai.pais){
-                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, pair));
 				}
                 for (const pair of player.container_ming.pais){
-                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, pair));
+                    pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, pair));
                 }
-                const lastpai =player.container_qipai.last_pai;
+                const lastpai = player.container_qipai.last_pai;
                 if (lastpai !== null){
-                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColor(spai, lastpai));
+                    lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColor(spai, lastpai));
                 }
 			}
             var self = view.DesktopMgr.Inst.players[0];
             for (const pair of self.container_qipai.pais){
-                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, pair));
             }
             for (const pair of self.container_ming.pais){
-                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, pair));
+                pair.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, pair));
             }
             const lastpai =self.container_qipai.last_pai;
             if (lastpai !== null){
-                lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.waringColorSelf(spai, lastpai));
+                lastpai.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, this.warningColorSelf(spai, lastpai));
             }
            //const handIn = view.DesktopMgr.Inst.mainrole.hand;
            // for (const tile of handIn) {
            //   tile._SetColor(this.waringColorSelf(spai, tile.val));
            //}
         }
-        waringColor(a, bmodel){
+        warningColor(a, bmodel) {
             var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8,0.8,0.8,1) : new Laya.Vector4(1,1,1,1);
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
+            if (c == 0 ) return  new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
                 if (c == 3) {
-                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1,0.8,0.8,1);
-                    return new Laya.Vector4(1,0.5,0.5,1);
+                    if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
+                    return new Laya.Vector4(1, 0.5, 0.5, 1);
                 }
-               if (a.index <=7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
-                    if (c == 1) return new Laya.Vector4(1,1,0.5,1);
-                    if (c == 2) return new Laya.Vector4(1,1,0.8,1);
+                if (a.index <=7 && a.index >= 3){ // 对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
+                     if (c == 1) return new Laya.Vector4(1, 1, 0.5, 1);
+                     if (c == 2) return new Laya.Vector4(1, 1, 0.8, 1);
                 } else if (a.index > 7){
-                    if (a.index == 8) {//对于8，7成的壁最有用，6和9效果等同但较差
-                        if (b.index == 7) return new Laya.Vector4(1,1,0,1);
-                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1,1,0.5,1);
-                    } else if (c==1 || c==2) return new Laya.Vector4(1,1,0,1);//对于9，7和8的效果等同。
+                    if (a.index == 8) { // 对于8，7成的壁最有用，6和9效果等同但较差
+                        if (b.index == 7) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于9，7和8的效果等同。
                 } else {
-                    if (a.index == 2) {//对于2，3成的壁最有用，1和4效果等同但较差
-                        if (b.index == 3) return new Laya.Vector4(1,1,0,1);
-                        if (b.index == 1 || b.index ==4) return new Laya.Vector4(1,1,0.5,1);
-                    } else if (c==1 || c==2) return new Laya.Vector4(1,1,0,1);//对于1，2和3的效果等同。
+                    if (a.index == 2) { // 对于2，3成的壁最有用，1和4效果等同但较差
+                        if (b.index == 3) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 1 || b.index == 4) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于1，2和3的效果等同。
                 }
             }
             return  defaultColor;
         }
-        waringColorSelf(a, bmodel){//自己只考虑壁候选和现物
+        warningColorSelf(a, bmodel) { // 自己只考虑壁候选和现物
             var b = bmodel.val;
             var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8,0.8,0.8,1) : new Laya.Vector4(1,1,1,1);
             if (a.type !== b.type) return defaultColor;
@@ -972,95 +970,32 @@
             for (let i = 5; i <= 8; i++) {
                 ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
                     type: "Image",
-                    props: {
-                        y: -10,
-                        x: -10,
-                        name: "level",
-                        scaleY: .5,
-                        scaleX: .5
-                    },
+                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
                     child: [{
                         type: "Image",
-                        props: {
-                            y: 0,
-                            x: 0,
-                            skin: "myres/rank_bg.png",
-                            name: "bg"
-                        }
+                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
+                    }, {
+                        type: "Image",
+                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
                     }, {
                         type: "Image",
                         props: {
-                            y: 15,
-                            x: 0,
-                            skin: "extendRes/level/queshi.png",
-                            name: "icon"
-                        }
-                    }, {
-                        type: "Image",
-                        props: {
-                            y: 191,
-                            x: 58,
-                            skin: "myres/starbg.png",
-                            scaleY: 1,
-                            scaleX: 1,
-                            name: "star2",
-                            anchorY: .5,
-                            anchorX: .5
-                        },
+                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
                         child: [{
                             type: "Image",
-                            props: {
-                                y: 26,
-                                x: 27,
-                                skin: "myres/star.png",
-                                anchorY: .5,
-                                anchorX: .5
-                            }
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
                         }]
                     }, {
                         type: "Image",
-                        props: {
-                            y: 142,
-                            x: 29,
-                            skin: "myres/starbg.png",
-                            scaleY: .7,
-                            scaleX: .7,
-                            name: "star3",
-                            anchorY: .5,
-                            anchorX: .5
-                        },
+                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
                         child: [{
                             type: "Image",
-                            props: {
-                                y: 26,
-                                x: 27,
-                                skin: "myres/star.png",
-                                anchorY: .5,
-                                anchorX: .5
-                            }
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
                         }]
                     }, {
                         type: "Image",
-                        props: {
-                            y: 214,
-                            x: 110,
-                            skin: "myres/starbg.png",
-                            scaleY: .7,
-                            scaleX: .7,
-                            name: "star1",
-                            anchorY: .5,
-                            anchorX: .5
-                        },
-                        child: [{
-                            type: "Image",
-                            props: {
-                                y: 26,
-                                x: 27,
-                                skin: "myres/star.png",
-                                anchorY: .5,
-                                anchorX: .5
-                            }
-                        }]
+                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
+                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
                     }]
                 }
 
@@ -1095,7 +1030,7 @@
                     }
                 }
                 dtile.ismoqie = true;
-                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8,0.8,0.8,1));
+                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
             }
             if (action.hasOwnProperty("operation")) {
                 const operations = action.operation;
@@ -1113,22 +1048,22 @@
                         const optionsIn = this.analyseHand(handTiles);
                         const options = [];
                         optionsIn.forEach(option => option && option.n ? options.push(option) : null);
-                        //let discard = handTiles.slice(-2, 2);
-                       // let discard2 = discard;
+                        // let discard = handTiles.slice(-2, 2);
+                        // let discard2 = discard;
 
                         this.handleDiscards(options);
 
                         options.sort((a, b) => b.n - a.n);
                         // console.log(JSON.stringify(options));
                         var maxn = options[0].n;
-                        for (var i=0;i<options.length;i++){
+                        for (var i = 0; i < options.length; i++){
                             if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
                             var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            const color = 3.7 - 3.5 * options[i].n / maxn;
-                             this.getFromHand(discard).forEach(tile => {
-                            tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                            setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                        });
+                            const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
+                            this.getFromHand(discard).forEach(tile => {
+                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
+                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
+                            });
                         }
 
                         //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
@@ -1156,7 +1091,7 @@
 					if (dic[str] === undefined) dic[str] = 1;
 					else dic[str]++;
 				}
-                const lastpai =player.container_qipai.last_pai;
+                const lastpai = player.container_qipai.last_pai;
                 if (lastpai !== null) {
                     const str = lastpai.val.toString();
 					if (dic[str] === undefined) dic[str] = 1;
@@ -1295,54 +1230,12 @@
         }
     }
     window.getCharacter = () => {
-        uiscript.UI_Sushe.characters[2] = {
-            charid: 200003,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400301
-        };
-        uiscript.UI_Sushe.characters[3] = {
-            charid: 200004,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400401
-        };
-        uiscript.UI_Sushe.characters[4] = {
-            charid: 200005,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400501
-        };
-        uiscript.UI_Sushe.characters[5] = {
-            charid: 200006,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400601
-        }
-        uiscript.UI_Sushe.characters[6] = {
-            charid: 200007,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400701
-        }
-        uiscript.UI_Sushe.characters[7] = {
-            charid: 200008,
-            exp: 20000,
-            extra_emoji: [13],
-            is_upgraded: true,
-            level: 5,
-            skin: 400801
-        };
+        uiscript.UI_Sushe.characters[2] = { charid: 200003, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400301 };
+        uiscript.UI_Sushe.characters[3] = { charid: 200004, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400401 };
+        uiscript.UI_Sushe.characters[4] = { charid: 200005, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400501 };
+        uiscript.UI_Sushe.characters[5] = { charid: 200006, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400601 };
+        uiscript.UI_Sushe.characters[6] = { charid: 200007, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400701 };
+        uiscript.UI_Sushe.characters[7] = { charid: 200008, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400801 };
     }
     // Events overRiding
     // Operations : 0 = "none", 1 = "dapai", 2 = "eat", 3 = "peng", 4 = "an_gang", 5 = "ming_gang", 6 = "add_gang", 7 = "liqi", 8 = "zimo", 9 = "rong", 10 = "jiuzhongjiupai", 11 = "babei"
