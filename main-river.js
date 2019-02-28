@@ -890,7 +890,7 @@
             var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5, 0.5, 1, 1);
+            if (c == 0 ) return new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
                 if (c == 3) {
                     if (a.index <= 6 && a.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
@@ -913,29 +913,29 @@
             }
             return  defaultColor;
         }
-        warningColorSelf(a, bmodel) { // 自己只考虑壁候选和现物
+        warningColorSelf(a, bmodel) { // 自己只考虑壁候选牌以及现物
             var b = bmodel.val;
-            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8,0.8,0.8,1) : new Laya.Vector4(1,1,1,1);
+            var defaultColor = bmodel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
             if (a.type !== b.type) return defaultColor;
             var c = Math.abs(a.index-b.index);
-            if (c == 0 ) return  new Laya.Vector4(0.5,0.5,1,1);
+            if (c == 0 ) return new Laya.Vector4(0.5, 0.5, 1, 1);
             if (a.type != 3){
-                if (a.index <=7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
-                    if (c == 1) return new Laya.Vector4(1,1,0.5,1);
-                    if (c == 2) return new Laya.Vector4(1,1,0.8,1);
+                if (a.index <= 7 && a.index >= 3){ //对于34567，成壁的可能性很低。距离为1的最有效，为2的效果较差
+                    if (c == 1) return new Laya.Vector4(1, 1, 0.5, 1);
+                    if (c == 2) return new Laya.Vector4(1, 1, 0.8, 1);
                 } else if (a.index > 7){
-                    if (a.index == 8) {//对于8，7成的壁最有用，6和9效果等同但较差
-                        if (b.index == 7) return new Laya.Vector4(1,1,0,1);
-                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1,1,0.5,1);
-                    } else if (c==1 || c==2) return new Laya.Vector4(1,1,0,1);//对于9，7和8的效果等同。
+                    if (a.index == 8) { // 对于8，7成的壁最有用，6和9效果等同但较差
+                        if (b.index == 7) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 6 || b.index == 9) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于9，7和8的效果等同。
                 } else {
-                    if (a.index == 2) {//对于2，3成的壁最有用，1和4效果等同但较差
-                        if (b.index == 3) return new Laya.Vector4(1,1,0,1);
-                        if (b.index == 1 || b.index ==4) return new Laya.Vector4(1,1,0.5,1);
-                    } else if (c==1 || c==2) return new Laya.Vector4(1,1,0,1);//对于1，2和3的效果等同。
+                    if (a.index == 2) { // 对于2，3成的壁最有用，1和4效果等同但较差
+                        if (b.index == 3) return new Laya.Vector4(1, 1, 0, 1);
+                        if (b.index == 1 || b.index == 4) return new Laya.Vector4(1, 1, 0.5, 1);
+                    } else if (c == 1 || c == 2) return new Laya.Vector4(1, 1, 0, 1); // 对于1，2和3的效果等同。
                 }
             }
-            return  defaultColor;
+            return defaultColor;
         }
         injectUI () {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
