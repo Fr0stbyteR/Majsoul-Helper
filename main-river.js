@@ -1063,20 +1063,20 @@
                         // console.log("maxn " + maxn);
 
                         for (var i = 0; i < options.length; i++){
-                            if ((options[i].n < maxn * 0.5 && i > 0) || options[i].n == 0) break;
                             var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            if ((options[i].m = maxm) && (options[i].m != options[0].m) && (options[i].n < maxn)) {
+                            if ((options[i].m == maxm) && (options[i].m != options[0].m) && (options[i].n < maxn)) {
                                 this.getFromHand(discard).forEach(tile => {
                                     tile._SetColor(new Laya.Vector4(0.8, 0.3, 0.3, 1));
                                     setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 0.3, 0.3, 1)), 750);
                                 });
                             }
                             else {
-                                const color = Math.pow(1.8 - 1.6 * options[i].n / maxn, 0.5);
-                                this.getFromHand(discard).forEach(tile => {
-                                    tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                                    setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                                });
+                                if (options[i].n == maxn) {
+                                    this.getFromHand(discard).forEach(tile => {
+                                        tile._SetColor(new Laya.Vector4(0.3, 0.8, 0.3, 1));
+                                        setTimeout(() => tile._SetColor(new Laya.Vector4(0.3, 0.8, 0.3, 1)), 750);
+                                    });
+                                }
                             }
                         }
 
