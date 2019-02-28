@@ -841,10 +841,10 @@
                         return m(e);
                     };
                 }
-
-                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
+                
+                const m = view.DesktopMgr.Inst.setChoosedPai.bind(view.DesktopMgr.Inst);
                 view.DesktopMgr.Inst.setChoosedPai = (e) => {
-                    const r = view.DesktopMgr.Inst._setChoosedPai(e);
+                    const r = m(e);
                     if (e !== null) this.warningDiscards(e);
                     return r;
                 }
