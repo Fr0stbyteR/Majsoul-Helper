@@ -1160,7 +1160,7 @@
                     options[i] = c_enum_machi34(c);
                     c[i]++;
                     if (options[i].length)
-                        options[i] = { da: i, m: restc(options[i], c), n: 1, v: options[i] };
+                        options[i] = { da: i, m: restc(options[i], c), n: restc(options[i], c), v: options[i] };
                 }
             }
             else {
