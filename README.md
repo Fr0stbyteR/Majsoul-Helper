@@ -1,6 +1,8 @@
 # 雀魂麻将牌效辅助 ![License](https://img.shields.io/github/license/Fr0stbyteR/majsoul-helper.svg)
 感谢 [FlyingBamboo](https://github.com/FlyingBamboo) 的巨大贡献
 
+<b style="color: pink">本项目仅供学习研究使用，使用此脚本进行游戏会导致您被官方封禁。</b>
+
 1. 使用天凤牌理规则，根据牌效将推荐的切牌染色。
 
 2. 使用 **main-river.js** 选牌时对河牌、副露牌进行染色，包括：
