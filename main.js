@@ -152,7 +152,7 @@
             b.style.right = "0px";
             b.style.zIndex = 1000;
             b.addEventListener("click", () => {
-                this.window = window.open("about:blank", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=360,height=360");
+                this.window = window.open("about:blank", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=380,height=380");
                 const d = this.window.document;
                 d.write(`
                     <html>
