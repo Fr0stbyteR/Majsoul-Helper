@@ -252,7 +252,7 @@
                 for (const operation of operations.operation_list) {
                     if (operation.type == 1) {
                         const options = this.analyseHand();
-                        if (this.auto) this.discard(Helper.indexToString(options[0].da));
+                        if (this.auto) setTimeout(() => this.discard(Helper.indexToString(options[0].da)), Math.random() * 2000 + 1000);
                     }
                 }
             }
