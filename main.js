@@ -29,6 +29,34 @@
         }
         set riverHelper(i) {
             this._riverHelper = i;
+            if (!view.DesktopMgr.Inst) return;
+            if (i == 0) {
+                for (let i = 0; i <= 3; i++) {
+                    const player = view.DesktopMgr.Inst.players[i];
+                    const tiles = player.container_qipai.pais;
+                    if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                    tiles.forEach(tile => {
+                        if (tile.ismoqie) {
+                            tile._ismoqie = tile.ismoqie;
+                            tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(1, 1, 1, 1));
+                            delete tile.ismoqie;
+                        }
+                    })
+                }
+            } else {
+                for (let i = 0; i <= 3; i++) {
+                    const player = view.DesktopMgr.Inst.players[i];
+                    const tiles = player.container_qipai.pais;
+                    if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                    tiles.forEach(tile => {
+                        if (tile._ismoqie) {
+                            tile.ismoqie = tile._ismoqie; 
+                            tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                            delete tile._ismoqie;
+                        }
+                    })
+                }
+            }
         }
         inject() {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(() => this.inject(), 1000);
@@ -163,6 +191,8 @@
                                     <input type="radio" id="river0" value="0" name="river" checked>
                                     <label>关闭</label>
                                     <input type="radio" id="river1" value="1" name="river">
+                                    <label>仅模切</label>
+                                    <input type="radio" id="river2" value="2" name="river">
                                     <label>开启</label>
                                 </div>
                             </div>
@@ -179,7 +209,7 @@
                     d.getElementById("masks").appendChild(div);
                 }
                 ["hand0", "hand1", "hand2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.handHelper = +e.target.value));
-                ["river0", "river1"].forEach(str => d.getElementById(str).addEventListener("click", e => this.riverHelper = +e.target.value));
+                ["river0", "river1", "river2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.riverHelper = +e.target.value));
             })
             document.body.appendChild(b);
             window.addEventListener("beforeunload", () => this.window.close());
@@ -202,8 +232,12 @@
                         tile = view.DesktopMgr.Inst.lastqipai;
                     }
                 }
-                tile.ismoqie = true;
-                tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                if (this._riverHelper) {
+                    tile.ismoqie = true; 
+                    tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                } else {
+                    tile._ismoqie = true;
+                }
             }
             if (action.hasOwnProperty("operation")) {
                 const operations = action.operation;
@@ -224,7 +258,7 @@
             }
         }
         dyeRiver(tileIn) {
-            if (!this._riverHelper) return;
+            if (this._riverHelper < 2) return;
             const warningColor = (tileSelected, tileRiverModel, isSelf) => {
                 let color = tileRiverModel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
                 const tileRiver = tileRiverModel.val;

@@ -24,7 +24,7 @@
 
 ### 安装方法 - 浏览器
 - 安装油猴脚本 TamperMonkey 
-- 导入 **main.js** 或 **main-river.js** (带牌河提示版本) 或打开 [此链接](https://greasyfork.org/scripts/378059-majsoul-helper) 安装脚本
+- 导入 **main.js** 或打开 [此链接](https://greasyfork.org/scripts/378059-majsoul-helper) 安装脚本
 
 ### 安装方法 - Majsoul Plus
 - 在 **resources\app\execute** 中新建文件夹
