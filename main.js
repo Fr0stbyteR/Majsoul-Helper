@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.3
-// @description  dye recommended discarding tile with tenhou/2
+// @version      0.3
+// @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
@@ -10,6 +10,376 @@
 
 (function () {
     'use strict';
+    window.Helper = class Helper {
+        constructor() {
+            this.reset();
+            this.inject();
+            this.appendButton();
+        }
+        reset() {
+            this.auto = false;
+            this._handHelper = 0;
+            this._riverHelper = 0;
+            this.mountain = new Array(34).fill(4);
+        }
+        set handHelper(i) {
+            this._handHelper = i;
+            if (i == 0 && view.DesktopMgr.Inst && view.DesktopMgr.Inst.mainrole.hand.length) view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
+            if (i == 1) this.analyseHand();
+        }
+        set riverHelper(i) {
+            this._riverHelper = i;
+        }
+        inject() {
+            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(() => this.inject(), 1000);
+            if (typeof view === "undefined" || !view.DesktopMgr || !view.DesktopMgr.prototype) return setTimeout(() => this.inject(), 1000);
+            const actionsToInject = { ActionAnGangAddGang: 700, ActionBabei: 700, ActionChiPengGang: 700, ActionDealTile: 200, ActionDiscardTile: 500, ActionNewRound: 1500 };// as { [key: string]: number } // inject with proper timeout
+            for (const key in actionsToInject) {
+                const action = view[key];
+                const delay = actionsToInject[key];
+                const mToInject = ["play", "fastplay", "record", "fastrecord"];
+                mToInject.forEach(mType => {
+                    const m = action[mType].bind(action);
+                    action[mType] = action => {
+                        const r = m(action);
+                        setTimeout(() => this.analyse(key, action, mType), delay);
+                        // console.log(action);
+                        return r;
+                    }
+                })
+            }
+            const m = view.DesktopMgr.prototype.setChoosedPai;
+            view.DesktopMgr.prototype.setChoosedPai = e => {
+                const r = m.call(view.DesktopMgr.Inst, e); // render normally
+                if (e !== null) this.dyeRiver(e); // override rendering
+                return r;
+            }
+            uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
+                void 0 === e && (e = !1);
+                view.DesktopMgr.Inst.seat;
+                for (var t = view.DesktopMgr.Inst.player_datas, i = 0; i < 4; i++) {
+                    var n = view.DesktopMgr.Inst.localPosition2Seat(i),
+                        a = this._player_infos[i];
+                    if (n < 0) a.container.visible = !1;
+                    else {
+                        if (a.container.visible = !0,
+                            a.name.text = t[n].nickname,
+                            a.head.id = t[n].avatar_id,
+                            a.avatar = t[n].avatar_id,
+                            a.head.setEmo(""),
+                            a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
+                            a.level.id = t[n].level.id,
+                            0 != i) {
+                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
+                                o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
+                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
+                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
+                        }
+                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
+                    }
+                }
+            }
+            for (let i = 5; i <= 8; i++) {
+                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
+                    type: "Image",
+                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
+                    child: [{
+                        type: "Image",
+                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
+                    }, {
+                        type: "Image",
+                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
+                        child: [{
+                            type: "Image",
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
+                        child: [{
+                            type: "Image",
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
+                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
+                    }]
+                }
+
+            }
+            console.log("Majsoul Helper injected.");
+            // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
+            // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
+        }
+        appendButton() {
+            const b = document.createElement("button");
+            b.innerText = "雀魂辅助";
+            b.style.position = "absolute";
+            b.style.bottom = "0px";
+            b.style.right = "0px";
+            b.style.zIndex = 1000;
+            b.addEventListener("click", () => {
+                this.window = window.open("about:blank", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=360,height=360");
+                const d = this.window.document;
+                d.write(`
+                    <html>
+                        <head>
+                            <title>雀魂辅助</title>
+                            <style>
+                                .mask {
+                                    position: relative;
+                                    display: inline-block;
+                                    width: 40px;
+                                    height: 64.5px;
+                                    z-index: 10;
+                                    background-color: black;
+                                    opacity: 0
+                                }
+                            </style>
+                        </head>
+                        <body style="margin: 0px; background-color: black; color: white">
+                            <div style="position: absolute; width: 360px; overflow: hidden;">
+                                <img width="400" src="https://majsoul.union-game.com/0/v0.4.1.w/scene/Assets/Resource/mjpai/mjp_default/hand.png" />
+                            </div>
+                            <div id="masks" style="width: 360px;">
+                            </div>
+                            <div id="options" style=" margin: 5px;">
+                                <div>
+                                    <span>手牌提示</span>
+                                    <input type="radio" id="hand0" value="0" name="hand" checked>
+                                    <label>无</label>
+                                    <input type="radio" id="hand1" value="1" name="hand">
+                                    <label>攻</label>
+                                    <input type="radio" id="hand2" value="2" name="hand">
+                                    <label>防</label>
+                                </div>
+                                <div>
+                                    <span>牌河提示</span>
+                                    <input type="radio" id="river0" value="0" name="river" checked>
+                                    <label>关闭</label>
+                                    <input type="radio" id="river1" value="1" name="river">
+                                    <label>开启</label>
+                                </div>
+                            </div>
+                        </body>
+                    </html>
+                `);
+                for (let i = 0; i < 34; i++) {
+                    const div = d.createElement("div");
+                    div.className = "mask";
+                    let j = i;
+                    if (i < 9) j += 18;
+                    else if (i < 27 && i >= 9) j -= 9;
+                    div.id = Helper.indexToString(j);
+                    d.getElementById("masks").appendChild(div);
+                }
+                ["hand0", "hand1", "hand2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.handHelper = +e.target.value));
+                ["river0", "river1"].forEach(str => d.getElementById(str).addEventListener("click", e => this.riverHelper = +e.target.value));
+            })
+            document.body.appendChild(b);
+            window.addEventListener("beforeunload", () => this.window.close());
+        }
+        analyse(key, action, mType) {
+            this.calcMountain();
+            if (mType !== "play") return;
+            if (key == "ActionNewRound") {
+                view.DesktopMgr.Inst.setAutoHule(true);
+                uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autohu"), 1);
+                if (this.auto) {
+                    view.DesktopMgr.Inst.setAutoNoFulu(true);
+                    uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
+                }
+            }
+            if (key == "ActionDiscardTile" && action.moqie){
+                let tile = null;
+                for (let i = 0; i < 4; i++) {
+                    if (view.DesktopMgr.Inst.players[i].seat == action.seat) {
+                        tile = view.DesktopMgr.Inst.lastqipai;
+                    }
+                }
+                tile.ismoqie = true;
+                tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+            }
+            if (action.hasOwnProperty("operation")) {
+                const operations = action.operation;
+                if (this.auto) {
+                    for (const operation of operations.operation_list) {
+                        if (operation.type == 7) {
+                            console.log("Riichi");
+                            view.DesktopMgr.Inst.mainrole.during_liqi = true;
+                        }
+                    }
+                }
+                for (const operation of operations.operation_list) {
+                    if (operation.type == 1) {
+                        const options = this.analyseHand();
+                        if (this.auto) this.discard(Helper.indexToString(options[0].da));
+                    }
+                }
+            }
+        }
+        dyeRiver(tileIn) {
+            if (!this._riverHelper) return;
+            const warningColor = (tileSelected, tileRiverModel, isSelf) => {
+                let color = tileRiverModel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
+                const tileRiver = tileRiverModel.val;
+                if (tileSelected.type !== tileRiver.type) return color;
+                const delta = Math.abs(tileSelected.index - tileRiver.index);
+                if (delta == 0) return new Laya.Vector4(.615, .827, .976, 1);
+                if (tileSelected.type == 3) return color; // 字牌
+                if (delta == 3 && !isSelf) { // 筋
+                    if (tileSelected.index <= 6 && tileSelected.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
+                    return new Laya.Vector4(0.8, 1, 0.8, 1);
+                }
+                if (delta < 2) { // 壁
+                    const tilesInMountain = this.mountain[Helper.indexOfTile(tileRiver.toString())];
+                    return new Laya.Vector4(1, 1, Math.min(1, tilesInMountain * 0.2 + 0.6), 1);
+                }
+                return color;
+            }
+            for (let i = 0; i <= 3; i++) {
+                const isSelf = i === 0;
+                const player = view.DesktopMgr.Inst.players[i];
+                const tiles = [...player.container_qipai.pais, ...player.container_ming.pais];
+                if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                tiles.forEach(tile => tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, warningColor(tileIn, tile, isSelf)));
+            }
+        }
+        handToString() {
+            const handIn = view.DesktopMgr.Inst.mainrole.hand;
+            let strOut = "";
+            for (const tileInGameIn of handIn) {
+                strOut += tileInGameIn.val.toString();
+            }
+            return tenhou.MPSZ.contract(strOut);
+        }
+        calcMountain() {
+            this.mountain = new Array(34).fill(4);
+            const visibleTiles = [];
+            for (const player of view.DesktopMgr.Inst.players) { // 别家弃牌和副露
+				for (const tile of player.container_qipai.pais) {
+					visibleTiles.push(tile.val.toString());
+				}
+				for (const tile of player.container_babei.pais) {
+					visibleTiles.push(tile.val.toString());
+				}
+                const lastTile = player.container_qipai.last_pai;
+                if (lastTile !== null) visibleTiles.push(lastTile.val.toString());
+                for (const tile of player.container_ming.pais) {
+					visibleTiles.push(tile.val.toString());
+				}
+            }
+            for (const tile of view.DesktopMgr.Inst.mainrole.hand) { // 自家手牌
+                visibleTiles.push(tile.val.toString());
+            }
+            for (const tile of view.DesktopMgr.Inst.dora) { // 宝牌指示牌
+                visibleTiles.push(tile.toString());
+            }
+            visibleTiles.forEach(strTile => this.mountain[Helper.indexOfTile(strTile)]--);
+            this.displayMountain();
+            return this.mountain;
+        }
+        displayMountain() {
+            if (!this.window) return;
+            const d = this.window.document;
+            this.mountain.forEach((v, i) => {
+                d.getElementById(Helper.indexToString(i)).style.opacity = (4 - v) / 5;
+            })
+        }
+        analyseHand() {
+            const restc = waitings => { // : number, 
+                let rest = 0;
+                waitings.forEach(tileIndex => rest += this.mountain[tileIndex]);
+                return rest;
+            }
+            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return;
+            const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
+            const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
+            const options = [];
+            if (syanten_org == -1) return options; // 和牌
+            else if (syanten_org == 0) { // 听牌
+                for (let i = 0; i < 34; i++) { // 遍历打/摸
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; j++) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+                }
+            } else {
+                for (let i = 0; i < 34; i++) {
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; ++j) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+                }
+            }
+            options.sort((a, b) => b.n - a.n);
+            let maxn = options[0].n;
+            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
+            for (let i = 0; i < options.length; i++){
+                if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
+                let discard = Helper.indexToString(options[i].da);
+                const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
+                if (this._handHelper == 1) this.getFromHand(discard).forEach(tile => tile._SetColor(new Laya.Vector4(color, 1, color, 1)));
+            }
+            return options;
+        }
+        discard(tileIn) {
+            const mainrole = view.DesktopMgr.Inst.mainrole;
+            const handIn = mainrole.hand;
+            for (let i = 0; i < handIn.length; i++) {
+                const tile = handIn[i];
+                if (tile.val.toString() == tileIn) {
+                    mainrole._choose_pai = handIn[i]; // setChoosePai
+                    mainrole.DoDiscardTile();
+                    return;
+                }
+            }
+            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
+            for (let i = 0; i < handIn.length; i++) {
+                const tile = handIn[i];
+                if (tile.val.toString() == tileIn) {
+                    mainrole._choose_pai = handIn[i]; // setChoosePai
+                    mainrole.DoDiscardTile();
+                    return;
+                }
+            }
+        }
+        getFromHand(tileIn) { // : Tile[]
+            const handIn = view.DesktopMgr.Inst.mainrole.hand;
+            const result = [];
+            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
+            if (tileIn.match(/5[mps]/) !== null) tileIn = tileIn.replace("5", "0");
+            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
+            return result;
+        }
+        static indexOfTile(str) {
+            const match = str.match(/(\d)([mpsz])/);
+            if (match === null) return -1;
+            return "mpsz".indexOf(match[2]) * 9 + (+match[1] === 0 ? 5 : +match[1]) - 1;
+        }
+        static indexToString(i) {
+            return (i % 9 + 1) + "mpsz"[parseInt(i / 9)];
+        }
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // TENHOU.NET (C)C-EGG http://tenhou.net/
@@ -62,25 +432,25 @@
             }
             return c;
         },
-        exextract34: function (t) {
+        exextract34: function (t) { // Hand tiles to mountain array
             var s = t
                 .replace(/(\d)m/g, "0$1")
                 .replace(/(\d)p/g, "1$1")
                 .replace(/(\d)s/g, "2$1")
                 .replace(/(\d)z/g, "3$1");
-            var i, c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            for (i = 0; i < s.length; i += 2) {
-                var n = s.substr(i, 2),
-                    k = -1;
-                if (n % 10) {
-                    k = 9 * Math.floor(n / 10) + ((n % 10) - 1);
+            var mountain = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            for (var i = 0; i < s.length; i += 2) {
+                var strTile = s.substr(i, 2),
+                    index = -1;
+                if (strTile % 10) {
+                    index = 9 * Math.floor(strTile / 10) + ((strTile % 10) - 1);
                 } else {
-                    k = 9 * n / 10 + 4; // aka5
+                    index = 9 * strTile / 10 + 4; // aka5
                 }
-                if (c[k] > 4) console.error("err n=" + n + " k=" + k + "<br>");
-                c[k]++;
+                if (mountain[index] > 4) console.error("err n=" + strTile + " k=" + index + "<br>");
+                mountain[index]++;
             }
-            return c;
+            return mountain;
         },
         compile136: function (c) {
             var i, s = "";
@@ -819,306 +1189,6 @@
         SYANTEN,
         AGARI
     };
-    window.Helper = class Helper {
-        constructor() {
-            this.reset();
-            this.inject();
-            this.injectUI();
-        }
-        reset() {
-            this.auto = false;
-            this.seat = 0;
-            this.mountain = new Array(34).fill(4);
-        }
-        inject() {
-            if (typeof view !== "undefined" && view.DesktopMgr.Inst) {
-                console.log("Majsoul Helper injected.");
-                for (const key in view.DesktopMgr.Inst.actionMap) {
-                    const action = view.DesktopMgr.Inst.actionMap[key];
-                    const m = action.method;
-                    action.method = (e) => {
-                        setTimeout(() => this.analyseOperation(e), 500);
-                        return m(e);
-                    };
-                }
-                /*
-                helper = this;
-                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
-                view.DesktopMgr.Inst.setChoosedPai = function (e) {
-                    view.DesktopMgr.Inst._setChoosedPai(e);
-                    if (e !== null){
-                        helper.warningDiscards(e);
-                    }
-                }
-                */
-            } else setTimeout(() => {
-                // console.log("Majsoul Helper waiting...");
-                this.inject();
-            }, 1000);
-            // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
-            // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
-        }
-        injectUI () {
-            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
-            console.log("Majsoul UIScript injected.")
-            let e = uiscript;
-            let o = uiscript.UI_DesktopInfo;
-            uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
-                void 0 === e && (e = !1);
-                view.DesktopMgr.Inst.seat;
-                for (var t = view.DesktopMgr.Inst.player_datas, i = 0; i < 4; i++) {
-                    var n = view.DesktopMgr.Inst.localPosition2Seat(i),
-                        a = this._player_infos[i];
-                    if (n < 0) a.container.visible = !1;
-                    else {
-                        if (a.container.visible = !0,
-                            a.name.text = t[n].nickname,
-                            a.head.id = t[n].avatar_id,
-                            a.avatar = t[n].avatar_id,
-                            a.head.setEmo(""),
-                            a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
-                            a.level.id = t[n].level.id,
-                            0 != i) {
-                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
-                                o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
-                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
-                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
-                        }
-                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
-                    }
-                }
-            }
-            for (let i = 5; i <= 8; i++) {
-                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
-                    type: "Image",
-                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
-                    child: [{
-                        type: "Image",
-                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
-                    }, {
-                        type: "Image",
-                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
-                    }, {
-                        type: "Image",
-                        props: {
-                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
-                        child: [{
-                            type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
-                        }]
-                    }, {
-                        type: "Image",
-                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
-                        child: [{
-                            type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
-                        }]
-                    }, {
-                        type: "Image",
-                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
-                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
-                    }]
-                }
-
-            }
-            return true;
-        }
-        handToString() {
-            const handIn = view.DesktopMgr.Inst.mainrole.hand;
-            let strOut = "";
-            for (const tileInGameIn of handIn) {
-                strOut += tileInGameIn.val.toString();
-            }
-            return tenhou.MPSZ.contract(strOut);
-        }
-        analyseOperation(e) {
-            const action = e.msg;
-            if (action.hasOwnProperty("md5")) {
-                setTimeout(() => {
-                    view.DesktopMgr.Inst.setAutoHule(true);
-                    uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autohu"), 1);
-                    if (this.auto) {
-                        view.DesktopMgr.Inst.setAutoNoFulu(true);
-                        uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
-                    }
-                }, 2000)
-            }
-            if (action.moqie){
-                var dtile =null;
-                for (var j = 0; j < 4; j++){
-                    if (view.DesktopMgr.Inst.players[j].seat == action.seat) {
-                        dtile = view.DesktopMgr.Inst.players[j].container_qipai.last_pai;
-                    }
-                }
-                dtile.ismoqie = true;
-                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
-            }
-            if (action.hasOwnProperty("operation")) {
-                const operations = action.operation;
-                if (this.auto) {
-                    for (const operation of operations.operation_list) {
-                        if (operation.type == 7) {
-                            console.log("Riichi");
-                            view.DesktopMgr.Inst.mainrole.during_liqi = true;
-                        }
-                    }
-                }
-                for (const operation of operations.operation_list) {
-                    if (operation.type == 1) {
-                        const handTiles = this.handToString();
-                        const optionsIn = this.analyseHand(handTiles);
-                        const options = [];
-                        optionsIn.forEach(option => option && option.n ? options.push(option) : null);
-                        // let discard = handTiles.slice(-2, 2);
-                        // let discard2 = discard;
-
-                        this.handleDiscards(options);
-
-                        options.sort((a, b) => b.n - a.n);
-                        // console.log(JSON.stringify(options));
-                        var maxn = options[0].n;
-                        for (var i = 0; i < options.length; i++){
-                            if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
-                            var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                            this.getFromHand(discard).forEach(tile => {
-                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                            });
-                        }
-
-                        //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
-                        //if (options[1]) discard2 = tenhou.MPSZ.fromHai136(options[1].da * 4 + 1);
-                        //this.getFromHand(discard).forEach(tile => {
-                        //    tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1));
-                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1)), 750);
-                        //});
-                        //this.getFromHand(discard2).forEach(tile => {
-                        //    tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1));
-                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1)), 750);
-                        //});
-                        //console.log(handTiles + " => " + discard);
-                        if (this.auto) this.discard(tenhou.MPSZ.fromHai136(options[0].da * 4 + 1));
-                    }
-                }
-            }
-        }
-
-        handleDiscards(options){
-            var dic = {};
-            for (const player of view.DesktopMgr.Inst.players){
-				for (const pair of player.container_qipai.pais){
-					const str = pair.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-				}
-                const lastpai = player.container_qipai.last_pai;
-                if (lastpai !== null) {
-                    const str = lastpai.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-                }
-                for (const pair of player.container_ming.pais){
-					const str = pair.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-				}
-			}
-			for (const opt of options){
-				for (const v of opt.v){
-                    const vs = tenhou.MPSZ.fromHai136(v * 4 + 1);
-					if (dic[vs] !== undefined) opt.n -= dic[vs];
-				}
-			}
-        }
-        analyseHand(tilesIn) {
-            const restc = (tiles, c34) => {
-                let n = 0;
-                for (let i = 0; i < tiles.length; ++i)
-                    n += 4 - c34[tiles[i]];
-                return n;
-            };
-            const tiles = tenhou.MPSZ.expand(tilesIn);
-            const c = tenhou.MPSZ.exextract34(tiles);
-            const syanten_org = tenhou.SYANTEN.calcSyanten2(c, 34)[0];
-            const options = new Array(35);
-            if (syanten_org == -1)
-                console.log("agari");
-            if (syanten_org == 0) {
-                const c_enum_machi34 = (c) => {
-                    const r = [];
-                    for (let i = 0; i < 34; ++i) {
-                        if (c[i] >= 4)
-                            continue;
-                        c[i]++; // 摸
-                        if (tenhou.AGARI.isAgari(c))
-                            r.push(i);
-                        c[i]--;
-                    }
-                    return r;
-                };
-                for (let i = 0; i < 34; ++i) { // 遍历打/摸
-                    if (!c[i])
-                        continue;
-                    c[i]--; // 打
-                    options[i] = c_enum_machi34(c);
-                    c[i]++;
-                    if (options[i].length)
-                        options[i] = { da: i, n: restc(options[i], c), v: options[i] };
-                }
-            }
-            else {
-                for (let i = 0; i < 34; ++i) {
-                    if (!c[i])
-                        continue;
-                    c[i]--; // 打
-                    options[i] = [];
-                    for (let j = 0; j < 34; ++j) {
-                        if (i == j || c[j] >= 4)
-                            continue;
-                        c[j]++; // 摸
-                        if (tenhou.SYANTEN.calcSyanten2(c, 34)[0] == syanten_org - 1)
-                            options[i].push(j);
-                        c[j]--;
-                    }
-                    c[i]++;
-                    if (options[i].length)
-                        options[i] = { da: i, n: restc(options[i], c), v: options[i] };
-                }
-            }
-            return options;
-        }
-        discard(tileIn) {
-            const mainrole = view.DesktopMgr.Inst.mainrole;
-            const handIn = mainrole.hand;
-            for (let i = 0; i < handIn.length; i++) {
-                const tile = handIn[i];
-                if (tile.val.toString() == tileIn) {
-                    mainrole._choose_pai = handIn[i]; // setChoosePai
-                    mainrole.DoDiscardTile();
-                    return;
-                }
-            }
-            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
-            for (let i = 0; i < handIn.length; i++) {
-                const tile = handIn[i];
-                if (tile.val.toString() == tileIn) {
-                    mainrole._choose_pai = handIn[i]; // setChoosePai
-                    mainrole.DoDiscardTile();
-                    return;
-                }
-            }
-        }
-        getFromHand(tileIn) {
-            const mainrole = view.DesktopMgr.Inst.mainrole;
-            const handIn = mainrole.hand;
-            const result = [];
-            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
-            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
-            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
-            return result;
-        }
-    }
     window.helper = new Helper();
     window.AddRoom = class AddRoom {
         constructor(idIn) {
