@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3
+// @version      0.3.1
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -272,7 +272,7 @@
                 }
                 if (delta < 2) { // 壁
                     const tilesInMountain = this.mountain[Helper.indexOfTile(tileRiver.toString())];
-                    return new Laya.Vector4(1, 1, Math.min(1, tilesInMountain * 0.2 + 0.6), 1);
+                    if (tilesInMountain < 2) return new Laya.Vector4(1, 1, Math.min(1, tilesInMountain * 0.2 + 0.6), 1);
                 }
                 return color;
             }
