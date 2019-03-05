@@ -252,7 +252,7 @@
                 for (const operation of operations.operation_list) {
                     if (operation.type == 1) {
                         const options = this.analyseHand();
-                        if (this.auto) setTimeout(() => this.discard(Helper.indexToString(options[0].da)), Math.random() * 2000 + 1000);
+                        if (this.auto && options.length) setTimeout(() => this.discard(Helper.indexToString(options[0].da)), Math.random() * 2000 + 1000);
                     }
                 }
             }
@@ -294,6 +294,11 @@
         }
         calcMountain() {
             this.mountain = new Array(34).fill(4);
+            if (view.DesktopMgr.Inst.player_datas.length === 3) {
+                for (let i = 1; i < 8; i++) {
+                    this.mountain[i] = 0;
+                }
+            }
             const visibleTiles = [];
             for (const player of view.DesktopMgr.Inst.players) { // 别家弃牌和副露
 				for (const tile of player.container_qipai.pais) {
@@ -326,53 +331,57 @@
             })
         }
         analyseHand() {
-            const restc = waitings => { // : number, 
-                let rest = 0;
-                waitings.forEach(tileIndex => rest += this.mountain[tileIndex]);
-                return rest;
-            }
-            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return;
-            const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
-            const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
             const options = [];
-            if (syanten_org == -1) return options; // 和牌
-            else if (syanten_org == 0) { // 听牌
-                for (let i = 0; i < 34; i++) { // 遍历打/摸
-                    if (!hand[i]) continue;
-                    hand[i]--; // 打
-                    const waitings = [];
-                    for (let j = 0; j < 34; j++) {
-                        if (i == j || hand[j] >= 4) continue;
-                        hand[j]++; // 摸
-                        if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
-                        hand[j]--;
-                    }
-                    hand[i]++;
-                    if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+            if (this._handHelper <= 1) { // attack
+                const restc = waitings => { // : number, 
+                    let rest = 0;
+                    waitings.forEach(tileIndex => rest += this.mountain[tileIndex]);
+                    return rest;
                 }
-            } else {
-                for (let i = 0; i < 34; i++) {
-                    if (!hand[i]) continue;
-                    hand[i]--; // 打
-                    const waitings = [];
-                    for (let j = 0; j < 34; ++j) {
-                        if (i == j || hand[j] >= 4) continue;
-                        hand[j]++; // 摸
-                        if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
-                        hand[j]--;
+                if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return options;
+                const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
+                const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
+                if (syanten_org == -1) return options; // 和牌
+                else if (syanten_org == 0) { // 听牌
+                    for (let i = 0; i < 34; i++) { // 遍历打/摸
+                        if (!hand[i]) continue;
+                        hand[i]--; // 打
+                        const waitings = [];
+                        for (let j = 0; j < 34; j++) {
+                            if (i == j || hand[j] >= 4) continue;
+                            hand[j]++; // 摸
+                            if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
+                            hand[j]--;
+                        }
+                        hand[i]++;
+                        if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
                     }
-                    hand[i]++;
-                    if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+                } else {
+                    for (let i = 0; i < 34; i++) {
+                        if (!hand[i]) continue;
+                        hand[i]--; // 打
+                        const waitings = [];
+                        for (let j = 0; j < 34; ++j) {
+                            if (i == j || hand[j] >= 4) continue;
+                            hand[j]++; // 摸
+                            if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
+                            hand[j]--;
+                        }
+                        hand[i]++;
+                        if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+                    }
                 }
-            }
-            options.sort((a, b) => b.n - a.n);
-            let maxn = options[0].n;
-            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
-            for (let i = 0; i < options.length; i++){
-                if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
-                let discard = Helper.indexToString(options[i].da);
-                const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                if (this._handHelper == 1) this.getFromHand(discard).forEach(tile => tile._SetColor(new Laya.Vector4(color, 1, color, 1)));
+                options.sort((a, b) => b.n - a.n);
+                let maxn = options[0].n;
+                view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
+                for (let i = 0; i < options.length; i++){
+                    if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
+                    let discard = Helper.indexToString(options[i].da);
+                    const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
+                    if (this._handHelper == 1) this.getFromHand(discard).forEach(tile => tile._SetColor(new Laya.Vector4(color, 1, color, 1)));
+                }
+            } else { // defense
+                
             }
             return options;
         }
