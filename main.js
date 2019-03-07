@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.1
+// @version      0.3.2
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -18,17 +18,19 @@
         }
         reset() {
             this.auto = false;
-            this._handHelper = 0;
-            this._riverHelper = 0;
+            this._handHelper = +localStorage.handHelper || 0;
+            this._riverHelper = +localStorage.riverHelper || 0;
             this.mountain = new Array(34).fill(4);
         }
         set handHelper(i) {
             this._handHelper = i;
+            localStorage.handHelper = i;
             if (i == 0 && view.DesktopMgr.Inst && view.DesktopMgr.Inst.mainrole.hand.length) view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
             if (i == 1) this.analyseHand();
         }
         set riverHelper(i) {
             this._riverHelper = i;
+            localStorage.riverHelper = i;
             if (!view.DesktopMgr.Inst) return;
             if (i == 0) {
                 for (let i = 0; i <= 3; i++) {
@@ -70,7 +72,7 @@
                     const m = action[mType].bind(action);
                     action[mType] = action => {
                         const r = m(action);
-                        setTimeout(() => this.analyse(key, action, mType), delay);
+                        setTimeout(() => this.analyse(key, action, mType), delay + (key === "ActionNewRound" && action.al ? 1300 : 0));
                         // console.log(action);
                         return r;
                     }
@@ -179,20 +181,20 @@
                             <div id="options" style=" margin: 5px;">
                                 <div>
                                     <span>手牌提示</span>
-                                    <input type="radio" id="hand0" value="0" name="hand" checked>
+                                    <input type="radio" id="hand0" value="0" name="hand"${this._handHelper === 0 ? " checked" : ""}>
                                     <label>无</label>
-                                    <input type="radio" id="hand1" value="1" name="hand">
+                                    <input type="radio" id="hand1" value="1" name="hand"${this._handHelper === 1 ? " checked" : ""}>
                                     <label>攻</label>
-                                    <input type="radio" id="hand2" value="2" name="hand">
+                                    <input type="radio" id="hand2" value="2" name="hand"${this._handHelper === 2 ? " checked" : ""}>
                                     <label>防</label>
                                 </div>
                                 <div>
                                     <span>牌河提示</span>
-                                    <input type="radio" id="river0" value="0" name="river" checked>
+                                    <input type="radio" id="river0" value="0" name="river"${this._riverHelper === 0 ? " checked" : ""}>
                                     <label>关闭</label>
-                                    <input type="radio" id="river1" value="1" name="river">
+                                    <input type="radio" id="river1" value="1" name="river"${this._riverHelper === 1 ? " checked" : ""}>
                                     <label>仅模切</label>
-                                    <input type="radio" id="river2" value="2" name="river">
+                                    <input type="radio" id="river2" value="2" name="river"${this._riverHelper === 2 ? " checked" : ""}>
                                     <label>开启</label>
                                 </div>
                             </div>
@@ -243,6 +245,11 @@
                 const operations = action.operation;
                 if (this.auto) {
                     for (const operation of operations.operation_list) {
+                        if (operation.type == 11) { // Babei
+                            console.log("Babei");
+                            setTimeout(() => uiscript.UI_LiQiZiMo.Inst.onBtn_BaBei(), Math.random() * 1000);
+                            return;
+                        }
                         if (operation.type == 7) {
                             console.log("Riichi");
                             view.DesktopMgr.Inst.mainrole.during_liqi = true;
