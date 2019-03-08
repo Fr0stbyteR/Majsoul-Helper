@@ -559,7 +559,7 @@
             const options = [];
             safetyRate.forEach((tileRate, tileIndex) => {
                 if (!tileRate) return;
-                options.push({ tileIndex, rate: tileRate.reduce((a, v, i) => typeof v === "number" ? Math.min(a, v * playersDangerRate[i]) : a, 1) })
+                options.push({ tileIndex, rate: tileRate.reduce((a, v, i) => typeof v === "number" ? Math.min(a, (v - 1) * playersDangerRate[i] + 1) : a, 1) })
             })
             options.sort((a, b) => b.rate - a.rate);
             return options;
