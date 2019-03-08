@@ -24,7 +24,7 @@
             this.mountain = new Array(34).fill(4);
         }
         resetDefenseInfo() {
-            this.defenseInfo = { mySeat: 0, river: [], riichiPlayers: [], fuuro: [], chang: 0, ju: 0 };
+            this.defenseInfo = { mySeat: 0, river: [[], [], [], []], riichiPlayers: [], fuuro: [[], [], [], []], chang: 0, ju: 0 };
         }
         set handHelper(i) {
             this._handHelper = i;
@@ -231,9 +231,6 @@
                     uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
                 }
                 this.resetDefenseInfo();
-                for (let i = 0; i < 4; i++) {
-                    this.defenseInfo.river[i] = [];
-                }
             }
             if (key == "ActionDiscardTile" && action.moqie){
                 let tile = null;
@@ -324,7 +321,7 @@
             view.DesktopMgr.Inst.players.forEach((player, i) => { // 别家弃牌和副露
                 const seat = view.DesktopMgr.Inst.localPosition2Seat(i);
                 this.defenseInfo.fuuro[seat] = [];
-                const reinitRiver = this.defenseInfo.river[seat] ? false : true;
+                const reinitRiver = player.container_qipai.pais.length && !this.defenseInfo.river[seat].length ? true : false;
                 if (reinitRiver) this.defenseInfo.river[seat] = [];
 				for (const tile of player.container_qipai.pais) {
 					visibleTiles.push(tile.val.toString());
