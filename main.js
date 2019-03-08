@@ -379,7 +379,10 @@
                     }
                 }
                 const rate = atk * atkRate + (1 - atk) * defRate;
-                if (rate > maxRate) option = tileIndex;
+                if (rate > maxRate) {
+                    option = tileIndex;
+                    maxRate = rate;
+                }
                 const r = Math.max(0, rate ** 3 * -1) * 0.6;
                 const g = Math.max(0, rate ** 3) * 0.6;
                 tile._SetColor(new Laya.Vector4(1 - g, 1 - r, 1 - r - g, 1));
