@@ -478,7 +478,9 @@
                     playersDangerRate[seat] = 1;
                     continue;
                 }
+                playersDangerRate[seat] += Math.min(defenseInfo.river[seat].length / 12, 0.8); // For each discard + 1/12
                 playersDangerRate[seat] += defenseInfo.fuuro[seat].length * 0.1; // For each tile of fuuro + 0.1
+                playersDangerRate[seat] = Math.min(playersDangerRate[seat], 1);
             }
             const safetyRate = [];
             hand.forEach((count, tileIndex) => { // Evaluate hand tiles
