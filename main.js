@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.2
+// @version      0.3.3
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -15,6 +15,7 @@
             this.reset();
             this.inject();
             this.appendButton();
+            this.resetDefenseInfo();
         }
         reset() {
             this.auto = false;
@@ -22,11 +23,14 @@
             this._riverHelper = +localStorage.riverHelper || 0;
             this.mountain = new Array(34).fill(4);
         }
+        resetDefenseInfo() {
+            this.defenseInfo = { mySeat: 0, river: [], riichiPlayers: [], fuuro: [], chang: 0, ju: 0 };
+        }
         set handHelper(i) {
             this._handHelper = i;
             localStorage.handHelper = i;
             if (i == 0 && view.DesktopMgr.Inst && view.DesktopMgr.Inst.mainrole.hand.length) view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
-            if (i == 1) this.analyseHand();
+            if (i > 0) this.analyseHand();
         }
         set riverHelper(i) {
             this._riverHelper = i;
@@ -226,14 +230,21 @@
                     view.DesktopMgr.Inst.setAutoNoFulu(true);
                     uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
                 }
+                this.resetDefenseInfo();
+                for (let i = 0; i < 4; i++) {
+                    this.defenseInfo.river[i] = [];
+                }
             }
             if (key == "ActionDiscardTile" && action.moqie){
                 let tile = null;
                 for (let i = 0; i < 4; i++) {
                     if (view.DesktopMgr.Inst.players[i].seat == action.seat) {
                         tile = view.DesktopMgr.Inst.lastqipai;
+                        break;
                     }
                 }
+                this.defenseInfo.river[action.seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: this.defenseInfo.riichiPlayers.slice() });
+                if (action.is_liqi || action.is_wliqi) this.defenseInfo.riichiPlayers.push(action.seat);
                 if (this._riverHelper) {
                     tile.ismoqie = true; 
                     tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
@@ -258,8 +269,11 @@
                 }
                 for (const operation of operations.operation_list) {
                     if (operation.type == 1) {
+                        this.defenseInfo.mySeat = view.DesktopMgr.Inst.seat;
+                        this.defenseInfo.chang = view.DesktopMgr.Inst.index_change;
+                        this.defenseInfo.ju = view.DesktopMgr.Inst.index_ju;
                         const options = this.analyseHand();
-                        if (this.auto && options.length) setTimeout(() => this.discard(Helper.indexToString(options[0].da)), Math.random() * 2000 + 1000);
+                        if (this.auto && options) setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
                     }
                 }
             }
@@ -307,25 +321,31 @@
                 }
             }
             const visibleTiles = [];
-            for (const player of view.DesktopMgr.Inst.players) { // 别家弃牌和副露
+            view.DesktopMgr.Inst.players.forEach((player, i) => { // 别家弃牌和副露
+                const seat = view.DesktopMgr.Inst.localPosition2Seat(i);
+                this.defenseInfo.fuuro[seat] = [];
+                const reinitRiver = this.defenseInfo.river[seat] ? false : true;
+                if (reinitRiver) this.defenseInfo.river[seat] = [];
 				for (const tile of player.container_qipai.pais) {
 					visibleTiles.push(tile.val.toString());
+                    if (reinitRiver) this.defenseInfo.river[seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: []});
 				}
 				for (const tile of player.container_babei.pais) {
-					visibleTiles.push(tile.val.toString());
+                    visibleTiles.push(tile.val.toString());
 				}
                 const lastTile = player.container_qipai.last_pai;
                 if (lastTile !== null) visibleTiles.push(lastTile.val.toString());
                 for (const tile of player.container_ming.pais) {
 					visibleTiles.push(tile.val.toString());
+                    this.defenseInfo.fuuro[seat].push(Helper.indexOfTile(tile.val.toString()));
 				}
-            }
-            for (const tile of view.DesktopMgr.Inst.mainrole.hand) { // 自家手牌
+            })
+            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => { // 自家手牌
                 visibleTiles.push(tile.val.toString());
-            }
-            for (const tile of view.DesktopMgr.Inst.dora) { // 宝牌指示牌
+            });
+            view.DesktopMgr.Inst.dora.forEach(tile => { // 宝牌指示牌
                 visibleTiles.push(tile.toString());
-            }
+            });
             visibleTiles.forEach(strTile => this.mountain[Helper.indexOfTile(strTile)]--);
             this.displayMountain();
             return this.mountain;
@@ -338,59 +358,227 @@
             })
         }
         analyseHand() {
-            const options = [];
-            if (this._handHelper <= 1) { // attack
-                const restc = waitings => { // : number, 
-                    let rest = 0;
-                    waitings.forEach(tileIndex => rest += this.mountain[tileIndex]);
-                    return rest;
-                }
-                if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return options;
-                const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
-                const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
-                if (syanten_org == -1) return options; // 和牌
-                else if (syanten_org == 0) { // 听牌
-                    for (let i = 0; i < 34; i++) { // 遍历打/摸
-                        if (!hand[i]) continue;
-                        hand[i]--; // 打
-                        const waitings = [];
-                        for (let j = 0; j < 34; j++) {
-                            if (i == j || hand[j] >= 4) continue;
-                            hand[j]++; // 摸
-                            if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
-                            hand[j]--;
-                        }
-                        hand[i]++;
-                        if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
-                    }
-                } else {
-                    for (let i = 0; i < 34; i++) {
-                        if (!hand[i]) continue;
-                        hand[i]--; // 打
-                        const waitings = [];
-                        for (let j = 0; j < 34; ++j) {
-                            if (i == j || hand[j] >= 4) continue;
-                            hand[j]++; // 摸
-                            if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
-                            hand[j]--;
-                        }
-                        hand[i]++;
-                        if (waitings.length) options.push({ da: i, n: restc(waitings), v: waitings });
+            let option;
+            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return options;
+            const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
+            const atkOptions = Helper.evaluateAttack(hand, this.mountain);
+            const defOptions = Helper.evaluateDefense(hand, this.mountain, this.defenseInfo, view.DesktopMgr.Inst.player_datas.length);
+            const atk = this._handHelper < 2 ? 1 : 0;
+            const maxRate = -1;
+            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => {
+                const tileIndex = Helper.indexOfTile(tile.val.toString());
+                let atkRate = 0;
+                let defRate = 0;
+                for (const option of atkOptions) {
+                    if (option.tileIndex === tileIndex) {
+                        atkRate = option.rate;
+                        break;
                     }
                 }
-                options.sort((a, b) => b.n - a.n);
-                let maxn = options[0].n;
-                view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
-                for (let i = 0; i < options.length; i++){
-                    if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
-                    let discard = Helper.indexToString(options[i].da);
-                    const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                    if (this._handHelper == 1) this.getFromHand(discard).forEach(tile => tile._SetColor(new Laya.Vector4(color, 1, color, 1)));
+                for (const option of defOptions) {
+                    if (option.tileIndex === tileIndex) {
+                        defRate = option.rate;
+                        break;
+                    }
                 }
-            } else { // defense
-                
+                const rate = atk * atkRate + (1 - atk) * defRate;
+                if (rate > maxRate) option = tileIndex;
+                const r = Math.max(0, rate ** 3 * -1) * 0.6;
+                const g = Math.max(0, rate ** 3) * 0.6;
+                tile._SetColor(new Laya.Vector4(1 - g, 1 - r, 1 - r - g, 1));
+            });
+            return option;
+        }
+        static evaluateAttack(hand, mountain) { // as number[34]
+            const restc = waitings => { // : number, 
+                let rest = 0;
+                waitings.forEach(tileIndex => rest += mountain[tileIndex]);
+                return rest;
             }
+            const options = [];
+            const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
+            if (syanten_org == -1) return options; // 和牌
+            else if (syanten_org == 0) { // 听牌
+                for (let i = 0; i < 34; i++) { // 遍历打/摸
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; j++) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ tileIndex: i, n: restc(waitings) });
+                }
+            } else {
+                for (let i = 0; i < 34; i++) {
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; ++j) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ tileIndex: i, n: restc(waitings) });
+                }
+            }
+            options.sort((a, b) => b.n - a.n);
+            let maxn = options[0].n;
+            options.forEach(option => option.rate = option.n / maxn);
             return options;
+        }
+        /**
+         *
+         * @static
+         * @param {number[]} hand - number[34]
+         * @param {number[]} mountain - number[34]
+         * @param {{ mySeat: number, riichiPlayers: number[], river: { tileIndex: number, afterRiichi: number[] }[], fuuro: number[][], chang: number, ju: number }} defenseInfo
+         * @param {number} playersCount
+         */
+        static evaluateDefense(hand, mountain, defenseInfo, playersCount) {
+            const getTilesOfOthersAfterRiichi = (seat, mySeat) => {
+                const tiles = [];
+                for (let i = 0; i < 4; i++) {
+                    if (i === mySeat) continue;
+                    if (i === seat) continue;
+                    for (const tile of defenseInfo.river[i]) {
+                        if (tile.afterRiichi.indexOf(seat) >= 0) {
+                            tiles.push(tile);
+                        }
+                    }
+                }
+                return tiles;
+            };
+            const findGenbutsuInRiver = (tileIndex, seat, mySeat) => {
+                for (const tile of defenseInfo.river[seat]) {
+                    if (tile.tileIndex === tileIndex) return true;
+                }
+                if (defenseInfo.riichiPlayers.indexOf(seat) === -1) return false;
+                for (const tile of getTilesOfOthersAfterRiichi(seat, mySeat)) {
+                    if (tile.tileIndex === tileIndex) return true;
+                }
+                return false;
+            }
+            const isYakuhai = (tileIndex, seat) => {
+                if (!this.TILE_GROUP.Z[tileIndex]) return false;
+                const n = tileIndex - 27;
+                return n >= 4 || n == (seat - defenseInfo.ju + 4) % 4 || n == defenseInfo.chang;
+            };
+            const playersDangerRate = [];
+            const mySeat = defenseInfo.mySeat;
+            for (let seat = 0; seat < 4; seat++) { // Evaluate danger rates
+                playersDangerRate[seat] = 0;
+                if (seat === mySeat) continue;
+                if (defenseInfo.riichiPlayers.indexOf(seat) >= 0) {
+                    playersDangerRate[seat] = 1;
+                    continue;
+                }
+                playersDangerRate[seat] += defenseInfo.fuuro[seat].length * 0.1; // For each tile of fuuro + 0.1
+            }
+            const safetyRate = [];
+            hand.forEach((count, tileIndex) => { // Evaluate hand tiles
+                if (!count) return;
+                safetyRate[tileIndex] = [];
+                for (let seat = 0; seat < 4; seat++) {
+                    if (seat === mySeat) continue;
+                    safetyRate[tileIndex][seat] = 1;
+                    if (findGenbutsuInRiver(tileIndex, seat, mySeat)) { // Genbutsu
+                        safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Genbutsu[0];
+                        continue;
+                    }
+                    if (this.TILE_GROUP.Z[tileIndex]) {
+                        if (mountain[tileIndex] === 0) { // TankiZ
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.TankiZ[0];
+                        } else {
+                            if (isYakuhai(tileIndex, seat)) { // Yakuhai
+                                safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Yakuhai[0];
+                            } else { // Kyakufuu
+                                safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Kyakufuu[0];
+                                safetyRate[tileIndex][seat] += this.TILE_SAFETY_RATE.Kyakufuu[1] * (3 - mountain[tileIndex]);
+                            }
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N19[tileIndex]) { // Suji19
+                        const suji = tileIndex + (tileIndex % 9 === 0 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji19[0];
+                            safetyRate[tileIndex][seat] += this.TILE_SAFETY_RATE.Suji19[1] * (3 - mountain[suji]);
+                        } else { // Musuji19
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji19[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N28[tileIndex]) { // Suji28
+                        const suji = tileIndex + (tileIndex % 9 === 1 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji28[0];
+                        } else { // Musuji28
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji2378[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N456[tileIndex]) { // Nakasuji 456
+                        const suji1 = tileIndex - 3;
+                        const suji2 = tileIndex + 3;
+                        const hasSuji1 = findGenbutsuInRiver(suji1, seat, mySeat);
+                        const hasSuji2 = findGenbutsuInRiver(suji2, seat, mySeat);
+                        if (hasSuji1 && hasSuji2) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.NakaSuji[0];
+                        } else if (hasSuji1 || hasSuji2) { // Katasuji
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Katasuji[0];
+                        } else { // Musuji
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji456[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N37[tileIndex]) { // Suji37
+                        const suji = tileIndex + (tileIndex % 9 === 2 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji37[0];
+                        } else { // Musuji37
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji2378[0];
+                        }
+                        continue;
+                    }
+                }
+            })
+            const options = [];
+            safetyRate.forEach((tileRate, tileIndex) => {
+                if (!tileRate) return;
+                options.push({ tileIndex, rate: tileRate.reduce((a, v, i) => typeof v === "number" ? Math.min(a, v * playersDangerRate[i]) : a, 1) })
+            })
+            options.sort((a, b) => b.rate - a.rate);
+            return options;
+        }
+        static TILE_SAFETY_RATE = {
+            Genbutsu: [1, 0], // 现物
+            TankiZ: [0.9, 0], // 单骑字牌
+            Suji19: [0.4, 0.2], // 筋牌19 仅单骑 看牌数
+            Kyakufuu: [0.2, 0.3], // 客风 看牌数
+            Suji28: [0.2, 0], // 筋牌28
+            NakaSuji: [0.2, 0], // 两筋456
+            Suji37: [0, 0], //筋牌37
+            Yakuhai: [-0.2, 0], // 役牌
+            Musuji19: [-0.5, 0], // 无筋19
+            Katasuji: [-0.5, 0], // 半筋456
+            Musuji2378: [-0.75, 0], // 无筋2378
+            Musuji456: [-1, 0] //无筋456
+        }
+        static TILE_GROUP = {
+            Z: new Array(34).fill(false).map((v, i) => i >= 27 ? true : false),
+            N19: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 0 || i % 9 === 8) ? true : false),
+            N28: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 1 || i % 9 === 7) ? true : false),
+            N37: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 2 || i % 9 === 6) ? true : false),
+            N456: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 >= 3 && i % 9 <= 5) ? true : false),
         }
         discard(tileIn) {
             const mainrole = view.DesktopMgr.Inst.mainrole;
