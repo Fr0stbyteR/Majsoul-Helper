@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.6
+// @version      0.3.7
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -564,27 +564,6 @@
             options.sort((a, b) => b.rate - a.rate);
             return options;
         }
-        static TILE_SAFETY_RATE = {
-            Genbutsu: [1, 0], // 现物
-            TankiZ: [0.9, 0], // 单骑字牌
-            Suji19: [0.4, 0.2], // 筋牌19 仅单骑 看牌数
-            Kyakufuu: [0.2, 0.3], // 客风 看牌数
-            Suji28: [0.2, 0], // 筋牌28
-            NakaSuji: [0.2, 0], // 两筋456
-            Suji37: [0, 0], //筋牌37
-            Yakuhai: [-0.2, 0], // 役牌
-            Musuji19: [-0.5, 0], // 无筋19
-            Katasuji: [-0.5, 0], // 半筋456
-            Musuji2378: [-0.75, 0], // 无筋2378
-            Musuji456: [-1, 0] //无筋456
-        }
-        static TILE_GROUP = {
-            Z: new Array(34).fill(false).map((v, i) => i >= 27 ? true : false),
-            N19: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 0 || i % 9 === 8) ? true : false),
-            N28: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 1 || i % 9 === 7) ? true : false),
-            N37: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 2 || i % 9 === 6) ? true : false),
-            N456: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 >= 3 && i % 9 <= 5) ? true : false),
-        }
         discard(tileIn) {
             const mainrole = view.DesktopMgr.Inst.mainrole;
             const handIn = mainrole.hand;
@@ -623,7 +602,27 @@
             return (i % 9 + 1) + "mpsz"[parseInt(i / 9)];
         }
     }
-
+    Helper.TILE_SAFETY_RATE = {
+        Genbutsu: [1, 0], // 现物
+        TankiZ: [0.9, 0], // 单骑字牌
+        Suji19: [0.4, 0.2], // 筋牌19 仅单骑 看牌数
+        Kyakufuu: [0.2, 0.3], // 客风 看牌数
+        Suji28: [0.2, 0], // 筋牌28
+        NakaSuji: [0.2, 0], // 两筋456
+        Suji37: [0, 0], //筋牌37
+        Yakuhai: [-0.2, 0], // 役牌
+        Musuji19: [-0.5, 0], // 无筋19
+        Katasuji: [-0.5, 0], // 半筋456
+        Musuji2378: [-0.75, 0], // 无筋2378
+        Musuji456: [-1, 0] //无筋456
+    }
+    Helper.TILE_GROUP = {
+        Z: new Array(34).fill(false).map((v, i) => i >= 27 ? true : false),
+        N19: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 0 || i % 9 === 8) ? true : false),
+        N28: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 1 || i % 9 === 7) ? true : false),
+        N37: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 2 || i % 9 === 6) ? true : false),
+        N456: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 >= 3 && i % 9 <= 5) ? true : false),
+    }
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // TENHOU.NET (C)C-EGG http://tenhou.net/
     /////////////////////////////////////////////////////////////////////////////////////////////////////
