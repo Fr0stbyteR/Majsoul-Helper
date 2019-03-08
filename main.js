@@ -361,7 +361,7 @@
             const atkOptions = Helper.evaluateAttack(hand, this.mountain);
             const defOptions = Helper.evaluateDefense(hand, this.mountain, this.defenseInfo, view.DesktopMgr.Inst.player_datas.length);
             const atk = this._handHelper < 2 ? 1 : 0;
-            const maxRate = -1;
+            let maxRate = -1;
             view.DesktopMgr.Inst.mainrole.hand.forEach(tile => {
                 const tileIndex = Helper.indexOfTile(tile.val.toString());
                 let atkRate = 0;
