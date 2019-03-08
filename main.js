@@ -269,8 +269,8 @@
                         this.defenseInfo.mySeat = view.DesktopMgr.Inst.seat;
                         this.defenseInfo.chang = view.DesktopMgr.Inst.index_change;
                         this.defenseInfo.ju = view.DesktopMgr.Inst.index_ju;
-                        const options = this.analyseHand();
-                        if (this.auto && options) setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
+                        const option = this.analyseHand();
+                        if (this.auto && option) setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
                     }
                 }
             }
@@ -356,7 +356,7 @@
         }
         analyseHand() {
             let option;
-            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return options;
+            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return option;
             const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
             const atkOptions = Helper.evaluateAttack(hand, this.mountain);
             const defOptions = Helper.evaluateDefense(hand, this.mountain, this.defenseInfo, view.DesktopMgr.Inst.player_datas.length);
