@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.4
+// @version      0.3.6
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -10,7 +10,7 @@
 
 (function () {
     'use strict';
-    window.Helper = class Helper {
+    class Helper {
         constructor() {
             this.reset();
             this.inject();
@@ -232,7 +232,7 @@
                 }
                 this.resetDefenseInfo();
             }
-            if (key == "ActionDiscardTile" && action.moqie){
+            if (key == "ActionDiscardTile") {
                 let tile = null;
                 for (let i = 0; i < 4; i++) {
                     if (view.DesktopMgr.Inst.players[i].seat == action.seat) {
@@ -242,11 +242,13 @@
                 }
                 this.defenseInfo.river[action.seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: this.defenseInfo.riichiPlayers.slice() });
                 if (action.is_liqi || action.is_wliqi) this.defenseInfo.riichiPlayers.push(action.seat);
-                if (this._riverHelper) {
-                    tile.ismoqie = true; 
-                    tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
-                } else {
-                    tile._ismoqie = true;
+                if (action.moqie) {
+                    if (this._riverHelper) {
+                        tile.ismoqie = true; 
+                        tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                    } else {
+                        tile._ismoqie = true;
+                    }
                 }
             }
             if (action.hasOwnProperty("operation")) {
@@ -427,6 +429,7 @@
                     if (waitings.length) options.push({ tileIndex: i, n: restc(waitings) });
                 }
             }
+            if (!options.length) return options;
             options.sort((a, b) => b.n - a.n);
             let maxn = options[0].n;
             options.forEach(option => option.rate = option.n / maxn);
@@ -1429,6 +1432,7 @@
         SYANTEN,
         AGARI
     };
+    window.Helper = Helper;
     window.helper = new Helper();
     window.AddRoom = class AddRoom {
         constructor(idIn) {
