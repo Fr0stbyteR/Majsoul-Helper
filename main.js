@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.2.3
-// @description  dye recommended discarding tile with tenhou/2
+// @version      0.3.7
+// @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
 // @grant        none
@@ -10,7 +10,619 @@
 
 (function () {
     'use strict';
+    class Helper {
+        constructor() {
+            this.reset();
+            this.inject();
+            this.appendButton();
+            this.resetDefenseInfo();
+        }
+        reset() {
+            this.auto = false;
+            this._handHelper = +localStorage.handHelper || 0;
+            this._riverHelper = +localStorage.riverHelper || 0;
+            this.mountain = new Array(34).fill(4);
+        }
+        resetDefenseInfo() {
+            this.defenseInfo = { mySeat: 0, river: [[], [], [], []], riichiPlayers: [], fuuro: [[], [], [], []], chang: 0, ju: 0 };
+        }
+        set handHelper(i) {
+            this._handHelper = i;
+            localStorage.handHelper = i;
+            if (i == 0 && view.DesktopMgr.Inst && view.DesktopMgr.Inst.mainrole.hand.length) view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
+            if (i > 0) this.analyseHand();
+        }
+        set riverHelper(i) {
+            this._riverHelper = i;
+            localStorage.riverHelper = i;
+            if (!view.DesktopMgr.Inst) return;
+            if (i == 0) {
+                for (let i = 0; i <= 3; i++) {
+                    const player = view.DesktopMgr.Inst.players[i];
+                    const tiles = player.container_qipai.pais;
+                    if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                    tiles.forEach(tile => {
+                        if (tile.ismoqie) {
+                            tile._ismoqie = tile.ismoqie;
+                            tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(1, 1, 1, 1));
+                            delete tile.ismoqie;
+                        }
+                    })
+                }
+            } else {
+                for (let i = 0; i <= 3; i++) {
+                    const player = view.DesktopMgr.Inst.players[i];
+                    const tiles = player.container_qipai.pais;
+                    if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                    tiles.forEach(tile => {
+                        if (tile._ismoqie) {
+                            tile.ismoqie = tile._ismoqie; 
+                            tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                            delete tile._ismoqie;
+                        }
+                    })
+                }
+            }
+        }
+        inject() {
+            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(() => this.inject(), 1000);
+            if (typeof view === "undefined" || !view.DesktopMgr || !view.DesktopMgr.prototype) return setTimeout(() => this.inject(), 1000);
+            const actionsToInject = { ActionAnGangAddGang: 700, ActionBabei: 700, ActionChiPengGang: 700, ActionDealTile: 200, ActionDiscardTile: 500, ActionNewRound: 1500 };// as { [key: string]: number } // inject with proper timeout
+            for (const key in actionsToInject) {
+                const action = view[key];
+                const delay = actionsToInject[key];
+                const mToInject = ["play", "fastplay", "record", "fastrecord"];
+                mToInject.forEach(mType => {
+                    const m = action[mType].bind(action);
+                    action[mType] = action => {
+                        const r = m(action);
+                        setTimeout(() => this.analyse(key, action, mType), delay + (key === "ActionNewRound" && action.al ? 1300 : 0));
+                        // console.log(action);
+                        return r;
+                    }
+                })
+            }
+            const m = view.DesktopMgr.prototype.setChoosedPai;
+            view.DesktopMgr.prototype.setChoosedPai = e => {
+                const r = m.call(view.DesktopMgr.Inst, e); // render normally
+                if (e !== null) this.dyeRiver(e); // override rendering
+                return r;
+            }
+            uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
+                void 0 === e && (e = !1);
+                view.DesktopMgr.Inst.seat;
+                for (var t = view.DesktopMgr.Inst.player_datas, i = 0; i < 4; i++) {
+                    var n = view.DesktopMgr.Inst.localPosition2Seat(i),
+                        a = this._player_infos[i];
+                    if (n < 0) a.container.visible = !1;
+                    else {
+                        if (a.container.visible = !0,
+                            a.name.text = t[n].nickname,
+                            a.head.id = t[n].avatar_id,
+                            a.avatar = t[n].avatar_id,
+                            a.head.setEmo(""),
+                            a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
+                            a.level.id = t[n].level.id,
+                            0 != i) {
+                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
+                                o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
+                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
+                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
+                        }
+                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
+                    }
+                }
+            }
+            for (let i = 5; i <= 8; i++) {
+                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
+                    type: "Image",
+                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
+                    child: [{
+                        type: "Image",
+                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
+                    }, {
+                        type: "Image",
+                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
+                    }, {
+                        type: "Image",
+                        props: {
+                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
+                        child: [{
+                            type: "Image",
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
+                        child: [{
+                            type: "Image",
+                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
+                        }]
+                    }, {
+                        type: "Image",
+                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
+                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
+                    }]
+                }
 
+            }
+            console.log("Majsoul Helper injected.");
+            // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
+            // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
+        }
+        appendButton() {
+            const b = document.createElement("button");
+            b.innerText = "雀魂辅助";
+            b.style.position = "absolute";
+            b.style.bottom = "0px";
+            b.style.right = "0px";
+            b.style.zIndex = 1000;
+            b.addEventListener("click", () => {
+                this.window = window.open("about:blank", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=380,height=380");
+                const d = this.window.document;
+                d.write(`
+                    <html>
+                        <head>
+                            <title>雀魂辅助</title>
+                            <style>
+                                .mask {
+                                    position: relative;
+                                    display: inline-block;
+                                    width: 40px;
+                                    height: 64.5px;
+                                    z-index: 10;
+                                    background-color: black;
+                                    opacity: 0
+                                }
+                            </style>
+                        </head>
+                        <body style="margin: 0px; background-color: black; color: white">
+                            <div style="position: absolute; width: 360px; overflow: hidden;">
+                                <img width="400" src="https://majsoul.union-game.com/0/v0.4.1.w/scene/Assets/Resource/mjpai/mjp_default/hand.png" />
+                            </div>
+                            <div id="masks" style="width: 360px;">
+                            </div>
+                            <div id="options" style=" margin: 5px;">
+                                <div>
+                                    <span>手牌提示</span>
+                                    <input type="radio" id="hand0" value="0" name="hand"${this._handHelper === 0 ? " checked" : ""}>
+                                    <label>无</label>
+                                    <input type="radio" id="hand1" value="1" name="hand"${this._handHelper === 1 ? " checked" : ""}>
+                                    <label>攻</label>
+                                    <input type="radio" id="hand2" value="2" name="hand"${this._handHelper === 2 ? " checked" : ""}>
+                                    <label>防</label>
+                                </div>
+                                <div>
+                                    <span>牌河提示</span>
+                                    <input type="radio" id="river0" value="0" name="river"${this._riverHelper === 0 ? " checked" : ""}>
+                                    <label>关闭</label>
+                                    <input type="radio" id="river1" value="1" name="river"${this._riverHelper === 1 ? " checked" : ""}>
+                                    <label>仅模切</label>
+                                    <input type="radio" id="river2" value="2" name="river"${this._riverHelper === 2 ? " checked" : ""}>
+                                    <label>开启</label>
+                                </div>
+                            </div>
+                        </body>
+                    </html>
+                `);
+                for (let i = 0; i < 34; i++) {
+                    const div = d.createElement("div");
+                    div.className = "mask";
+                    let j = i;
+                    if (i < 9) j += 18;
+                    else if (i < 27 && i >= 9) j -= 9;
+                    div.id = Helper.indexToString(j);
+                    d.getElementById("masks").appendChild(div);
+                }
+                ["hand0", "hand1", "hand2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.handHelper = +e.target.value));
+                ["river0", "river1", "river2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.riverHelper = +e.target.value));
+            })
+            document.body.appendChild(b);
+            window.addEventListener("beforeunload", () => this.window.close());
+        }
+        analyse(key, action, mType) {
+            this.calcMountain();
+            if (mType !== "play") return;
+            if (key == "ActionNewRound") {
+                view.DesktopMgr.Inst.setAutoHule(true);
+                uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autohu"), 1);
+                if (this.auto) {
+                    view.DesktopMgr.Inst.setAutoNoFulu(true);
+                    uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
+                }
+                this.resetDefenseInfo();
+            }
+            if (key == "ActionDiscardTile") {
+                let tile = null;
+                for (let i = 0; i < 4; i++) {
+                    if (view.DesktopMgr.Inst.players[i].seat == action.seat) {
+                        tile = view.DesktopMgr.Inst.lastqipai;
+                        break;
+                    }
+                }
+                this.defenseInfo.river[action.seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: this.defenseInfo.riichiPlayers.slice() });
+                if (action.is_liqi || action.is_wliqi) this.defenseInfo.riichiPlayers.push(action.seat);
+                if (action.moqie) {
+                    if (this._riverHelper) {
+                        tile.ismoqie = true; 
+                        tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
+                    } else {
+                        tile._ismoqie = true;
+                    }
+                }
+            }
+            if (action.hasOwnProperty("operation")) {
+                const operations = action.operation;
+                if (this.auto) {
+                    for (const operation of operations.operation_list) {
+                        if (operation.type == 11) { // Babei
+                            console.log("Babei");
+                            setTimeout(() => uiscript.UI_LiQiZiMo.Inst.onBtn_BaBei(), Math.random() * 1000);
+                            return;
+                        }
+                        if (operation.type == 7) {
+                            console.log("Riichi");
+                            view.DesktopMgr.Inst.mainrole.during_liqi = true;
+                        }
+                    }
+                }
+                for (const operation of operations.operation_list) {
+                    if (operation.type == 1) {
+                        this.defenseInfo.mySeat = view.DesktopMgr.Inst.seat;
+                        this.defenseInfo.chang = view.DesktopMgr.Inst.index_change;
+                        this.defenseInfo.ju = view.DesktopMgr.Inst.index_ju;
+                        const option = this.analyseHand();
+                        if (this.auto && option) setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
+                    }
+                }
+            }
+        }
+        dyeRiver(tileIn) {
+            if (this._riverHelper < 2) return;
+            const warningColor = (tileSelected, tileRiverModel, isSelf) => {
+                let color = tileRiverModel.ismoqie ? new Laya.Vector4(0.8, 0.8, 0.8, 1) : new Laya.Vector4(1, 1, 1, 1);
+                const tileRiver = tileRiverModel.val;
+                if (tileSelected.type !== tileRiver.type) return color;
+                const delta = Math.abs(tileSelected.index - tileRiver.index);
+                if (delta == 0) return new Laya.Vector4(.615, .827, .976, 1);
+                if (tileSelected.type == 3) return color; // 字牌
+                if (delta == 3 && !isSelf) { // 筋
+                    if (tileSelected.index <= 6 && tileSelected.index >= 4) return new Laya.Vector4(1, 0.8, 0.8, 1);
+                    return new Laya.Vector4(0.8, 1, 0.8, 1);
+                }
+                if (delta < 2) { // 壁
+                    const tilesInMountain = this.mountain[Helper.indexOfTile(tileRiver.toString())];
+                    if (tilesInMountain < 2) return new Laya.Vector4(1, 1, Math.min(1, tilesInMountain * 0.2 + 0.6), 1);
+                }
+                return color;
+            }
+            for (let i = 0; i <= 3; i++) {
+                const isSelf = i === 0;
+                const player = view.DesktopMgr.Inst.players[i];
+                const tiles = [...player.container_qipai.pais, ...player.container_ming.pais];
+                if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
+                tiles.forEach(tile => tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, warningColor(tileIn, tile, isSelf)));
+            }
+        }
+        handToString() {
+            const handIn = view.DesktopMgr.Inst.mainrole.hand;
+            let strOut = "";
+            for (const tileInGameIn of handIn) {
+                strOut += tileInGameIn.val.toString();
+            }
+            return tenhou.MPSZ.contract(strOut);
+        }
+        calcMountain() {
+            this.mountain = new Array(34).fill(4);
+            if (view.DesktopMgr.Inst.player_datas.length === 3) {
+                for (let i = 1; i < 8; i++) {
+                    this.mountain[i] = 0;
+                }
+            }
+            const visibleTiles = [];
+            view.DesktopMgr.Inst.players.forEach((player, i) => { // 别家弃牌和副露
+                const seat = view.DesktopMgr.Inst.localPosition2Seat(i);
+                this.defenseInfo.fuuro[seat] = [];
+                const reinitRiver = player.container_qipai.pais.length && !this.defenseInfo.river[seat].length ? true : false;
+                if (reinitRiver) this.defenseInfo.river[seat] = [];
+				for (const tile of player.container_qipai.pais) {
+					visibleTiles.push(tile.val.toString());
+                    if (reinitRiver) this.defenseInfo.river[seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: []});
+				}
+				for (const tile of player.container_babei.pais) {
+                    visibleTiles.push(tile.val.toString());
+				}
+                const lastTile = player.container_qipai.last_pai;
+                if (lastTile !== null) visibleTiles.push(lastTile.val.toString());
+                for (const tile of player.container_ming.pais) {
+					visibleTiles.push(tile.val.toString());
+                    this.defenseInfo.fuuro[seat].push(Helper.indexOfTile(tile.val.toString()));
+				}
+            })
+            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => { // 自家手牌
+                visibleTiles.push(tile.val.toString());
+            });
+            view.DesktopMgr.Inst.dora.forEach(tile => { // 宝牌指示牌
+                visibleTiles.push(tile.toString());
+            });
+            visibleTiles.forEach(strTile => this.mountain[Helper.indexOfTile(strTile)]--);
+            this.displayMountain();
+            return this.mountain;
+        }
+        displayMountain() {
+            if (!this.window) return;
+            const d = this.window.document;
+            this.mountain.forEach((v, i) => {
+                d.getElementById(Helper.indexToString(i)).style.opacity = (4 - v) / 5;
+            })
+        }
+        analyseHand() {
+            let option;
+            if (!view.DesktopMgr.Inst || !view.DesktopMgr.Inst.mainrole.hand.length) return option;
+            const hand = tenhou.MPSZ.exextract34(tenhou.MPSZ.expand(this.handToString())); // as number[34], hand tiles to mountain array
+            const atkOptions = Helper.evaluateAttack(hand, this.mountain);
+            const defOptions = Helper.evaluateDefense(hand, this.mountain, this.defenseInfo, view.DesktopMgr.Inst.player_datas.length);
+            const atk = this._handHelper < 2 ? 1 : 0;
+            let maxRate = -1;
+            view.DesktopMgr.Inst.mainrole.hand.forEach(tile => {
+                const tileIndex = Helper.indexOfTile(tile.val.toString());
+                let atkRate = 0;
+                let defRate = 0;
+                for (const option of atkOptions) {
+                    if (option.tileIndex === tileIndex) {
+                        atkRate = option.rate;
+                        break;
+                    }
+                }
+                for (const option of defOptions) {
+                    if (option.tileIndex === tileIndex) {
+                        defRate = option.rate;
+                        break;
+                    }
+                }
+                const rate = atk * atkRate + (1 - atk) * defRate;
+                if (rate > maxRate) {
+                    option = tileIndex;
+                    maxRate = rate;
+                }
+                const r = Math.max(0, rate ** 3 * -1) * 0.6;
+                const g = Math.max(0, rate ** 3) * 0.6;
+                tile._SetColor(new Laya.Vector4(1 - g, 1 - r, 1 - r - g, 1));
+            });
+            return option;
+        }
+        static evaluateAttack(hand, mountain) { // as number[34]
+            const restc = waitings => { // : number, 
+                let rest = 0;
+                waitings.forEach(tileIndex => rest += mountain[tileIndex]);
+                return rest;
+            }
+            const options = [];
+            const syanten_org = tenhou.SYANTEN.calcSyanten2(hand, 34)[0]; // 向听数：-1 和牌，0 听牌
+            if (syanten_org == -1) return options; // 和牌
+            else if (syanten_org == 0) { // 听牌
+                for (let i = 0; i < 34; i++) { // 遍历打/摸
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; j++) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.AGARI.isAgari(hand)) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ tileIndex: i, n: restc(waitings) });
+                }
+            } else {
+                for (let i = 0; i < 34; i++) {
+                    if (!hand[i]) continue;
+                    hand[i]--; // 打
+                    const waitings = [];
+                    for (let j = 0; j < 34; ++j) {
+                        if (i == j || hand[j] >= 4) continue;
+                        hand[j]++; // 摸
+                        if (tenhou.SYANTEN.calcSyanten2(hand, 34)[0] == syanten_org - 1) waitings.push(j);
+                        hand[j]--;
+                    }
+                    hand[i]++;
+                    if (waitings.length) options.push({ tileIndex: i, n: restc(waitings) });
+                }
+            }
+            if (!options.length) return options;
+            options.sort((a, b) => b.n - a.n);
+            let maxn = options[0].n;
+            options.forEach(option => option.rate = option.n / maxn);
+            return options;
+        }
+        /**
+         *
+         * @static
+         * @param {number[]} hand - number[34]
+         * @param {number[]} mountain - number[34]
+         * @param {{ mySeat: number, riichiPlayers: number[], river: { tileIndex: number, afterRiichi: number[] }[], fuuro: number[][], chang: number, ju: number }} defenseInfo
+         * @param {number} playersCount
+         */
+        static evaluateDefense(hand, mountain, defenseInfo, playersCount) {
+            const getTilesOfOthersAfterRiichi = (seat, mySeat) => {
+                const tiles = [];
+                for (let i = 0; i < 4; i++) {
+                    if (i === mySeat) continue;
+                    if (i === seat) continue;
+                    for (const tile of defenseInfo.river[i]) {
+                        if (tile.afterRiichi.indexOf(seat) >= 0) {
+                            tiles.push(tile);
+                        }
+                    }
+                }
+                return tiles;
+            };
+            const findGenbutsuInRiver = (tileIndex, seat, mySeat) => {
+                for (const tile of defenseInfo.river[seat]) {
+                    if (tile.tileIndex === tileIndex) return true;
+                }
+                if (defenseInfo.riichiPlayers.indexOf(seat) === -1) return false;
+                for (const tile of getTilesOfOthersAfterRiichi(seat, mySeat)) {
+                    if (tile.tileIndex === tileIndex) return true;
+                }
+                return false;
+            }
+            const isYakuhai = (tileIndex, seat) => {
+                if (!this.TILE_GROUP.Z[tileIndex]) return false;
+                const n = tileIndex - 27;
+                return n >= 4 || n == (seat - defenseInfo.ju + 4) % 4 || n == defenseInfo.chang;
+            };
+            const playersDangerRate = [];
+            const mySeat = defenseInfo.mySeat;
+            for (let seat = 0; seat < 4; seat++) { // Evaluate danger rates
+                playersDangerRate[seat] = 0;
+                if (seat === mySeat) continue;
+                if (defenseInfo.riichiPlayers.indexOf(seat) >= 0) {
+                    playersDangerRate[seat] = 1;
+                    continue;
+                }
+                playersDangerRate[seat] += Math.min(defenseInfo.river[seat].length / 12, 0.8); // For each discard + 1/12
+                playersDangerRate[seat] += defenseInfo.fuuro[seat].length * 0.1; // For each tile of fuuro + 0.1
+                playersDangerRate[seat] = Math.min(playersDangerRate[seat], 1);
+            }
+            const safetyRate = [];
+            hand.forEach((count, tileIndex) => { // Evaluate hand tiles
+                if (!count) return;
+                safetyRate[tileIndex] = [];
+                for (let seat = 0; seat < 4; seat++) {
+                    if (seat === mySeat) continue;
+                    safetyRate[tileIndex][seat] = 1;
+                    if (findGenbutsuInRiver(tileIndex, seat, mySeat)) { // Genbutsu
+                        safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Genbutsu[0];
+                        continue;
+                    }
+                    if (this.TILE_GROUP.Z[tileIndex]) {
+                        if (mountain[tileIndex] === 0) { // TankiZ
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.TankiZ[0];
+                        } else {
+                            if (isYakuhai(tileIndex, seat)) { // Yakuhai
+                                safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Yakuhai[0];
+                            } else { // Kyakufuu
+                                safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Kyakufuu[0];
+                                safetyRate[tileIndex][seat] += this.TILE_SAFETY_RATE.Kyakufuu[1] * (3 - mountain[tileIndex]);
+                            }
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N19[tileIndex]) { // Suji19
+                        const suji = tileIndex + (tileIndex % 9 === 0 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji19[0];
+                            safetyRate[tileIndex][seat] += this.TILE_SAFETY_RATE.Suji19[1] * (3 - mountain[suji]);
+                        } else { // Musuji19
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji19[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N28[tileIndex]) { // Suji28
+                        const suji = tileIndex + (tileIndex % 9 === 1 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji28[0];
+                        } else { // Musuji28
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji2378[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N456[tileIndex]) { // Nakasuji 456
+                        const suji1 = tileIndex - 3;
+                        const suji2 = tileIndex + 3;
+                        const hasSuji1 = findGenbutsuInRiver(suji1, seat, mySeat);
+                        const hasSuji2 = findGenbutsuInRiver(suji2, seat, mySeat);
+                        if (hasSuji1 && hasSuji2) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.NakaSuji[0];
+                        } else if (hasSuji1 || hasSuji2) { // Katasuji
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Katasuji[0];
+                        } else { // Musuji
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji456[0];
+                        }
+                        continue;
+                    }
+                    if (this.TILE_GROUP.N37[tileIndex]) { // Suji37
+                        const suji = tileIndex + (tileIndex % 9 === 2 ? 3 : -3);
+                        const hasSuji = findGenbutsuInRiver(suji, seat, mySeat);
+                        if (hasSuji) {
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Suji37[0];
+                        } else { // Musuji37
+                            safetyRate[tileIndex][seat] = this.TILE_SAFETY_RATE.Musuji2378[0];
+                        }
+                        continue;
+                    }
+                }
+            })
+            const options = [];
+            safetyRate.forEach((tileRate, tileIndex) => {
+                if (!tileRate) return;
+                options.push({ tileIndex, rate: tileRate.reduce((a, v, i) => typeof v === "number" ? Math.min(a, (v - 1) * playersDangerRate[i] + 1) : a, 1) })
+            })
+            options.sort((a, b) => b.rate - a.rate);
+            return options;
+        }
+        discard(tileIn) {
+            const mainrole = view.DesktopMgr.Inst.mainrole;
+            const handIn = mainrole.hand;
+            for (let i = 0; i < handIn.length; i++) {
+                const tile = handIn[i];
+                if (tile.val.toString() == tileIn) {
+                    mainrole._choose_pai = handIn[i]; // setChoosePai
+                    mainrole.DoDiscardTile();
+                    return;
+                }
+            }
+            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
+            for (let i = 0; i < handIn.length; i++) {
+                const tile = handIn[i];
+                if (tile.val.toString() == tileIn) {
+                    mainrole._choose_pai = handIn[i]; // setChoosePai
+                    mainrole.DoDiscardTile();
+                    return;
+                }
+            }
+        }
+        getFromHand(tileIn) { // : Tile[]
+            const handIn = view.DesktopMgr.Inst.mainrole.hand;
+            const result = [];
+            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
+            if (tileIn.match(/5[mps]/) !== null) tileIn = tileIn.replace("5", "0");
+            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
+            return result;
+        }
+        static indexOfTile(str) {
+            const match = str.match(/(\d)([mpsz])/);
+            if (match === null) return -1;
+            return "mpsz".indexOf(match[2]) * 9 + (+match[1] === 0 ? 5 : +match[1]) - 1;
+        }
+        static indexToString(i) {
+            return (i % 9 + 1) + "mpsz"[parseInt(i / 9)];
+        }
+    }
+    Helper.TILE_SAFETY_RATE = {
+        Genbutsu: [1, 0], // 现物
+        TankiZ: [0.9, 0], // 单骑字牌
+        Suji19: [0.4, 0.2], // 筋牌19 仅单骑 看牌数
+        Kyakufuu: [0.2, 0.3], // 客风 看牌数
+        Suji28: [0.2, 0], // 筋牌28
+        NakaSuji: [0.2, 0], // 两筋456
+        Suji37: [0, 0], //筋牌37
+        Yakuhai: [-0.2, 0], // 役牌
+        Musuji19: [-0.5, 0], // 无筋19
+        Katasuji: [-0.5, 0], // 半筋456
+        Musuji2378: [-0.75, 0], // 无筋2378
+        Musuji456: [-1, 0] //无筋456
+    }
+    Helper.TILE_GROUP = {
+        Z: new Array(34).fill(false).map((v, i) => i >= 27 ? true : false),
+        N19: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 0 || i % 9 === 8) ? true : false),
+        N28: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 1 || i % 9 === 7) ? true : false),
+        N37: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 === 2 || i % 9 === 6) ? true : false),
+        N456: new Array(34).fill(false).map((v, i) => i < 27 && (i % 9 >= 3 && i % 9 <= 5) ? true : false),
+    }
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // TENHOU.NET (C)C-EGG http://tenhou.net/
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,25 +674,25 @@
             }
             return c;
         },
-        exextract34: function (t) {
+        exextract34: function (t) { // Hand tiles to mountain array
             var s = t
                 .replace(/(\d)m/g, "0$1")
                 .replace(/(\d)p/g, "1$1")
                 .replace(/(\d)s/g, "2$1")
                 .replace(/(\d)z/g, "3$1");
-            var i, c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            for (i = 0; i < s.length; i += 2) {
-                var n = s.substr(i, 2),
-                    k = -1;
-                if (n % 10) {
-                    k = 9 * Math.floor(n / 10) + ((n % 10) - 1);
+            var mountain = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            for (var i = 0; i < s.length; i += 2) {
+                var strTile = s.substr(i, 2),
+                    index = -1;
+                if (strTile % 10) {
+                    index = 9 * Math.floor(strTile / 10) + ((strTile % 10) - 1);
                 } else {
-                    k = 9 * n / 10 + 4; // aka5
+                    index = 9 * strTile / 10 + 4; // aka5
                 }
-                if (c[k] > 4) console.error("err n=" + n + " k=" + k + "<br>");
-                c[k]++;
+                if (mountain[index] > 4) console.error("err n=" + strTile + " k=" + index + "<br>");
+                mountain[index]++;
             }
-            return c;
+            return mountain;
         },
         compile136: function (c) {
             var i, s = "";
@@ -819,306 +1431,7 @@
         SYANTEN,
         AGARI
     };
-    window.Helper = class Helper {
-        constructor() {
-            this.reset();
-            this.inject();
-            this.injectUI();
-        }
-        reset() {
-            this.auto = false;
-            this.seat = 0;
-            this.mountain = new Array(34).fill(4);
-        }
-        inject() {
-            if (typeof view !== "undefined" && view.DesktopMgr.Inst) {
-                console.log("Majsoul Helper injected.");
-                for (const key in view.DesktopMgr.Inst.actionMap) {
-                    const action = view.DesktopMgr.Inst.actionMap[key];
-                    const m = action.method;
-                    action.method = (e) => {
-                        setTimeout(() => this.analyseOperation(e), 500);
-                        return m(e);
-                    };
-                }
-                /*
-                helper = this;
-                view.DesktopMgr.Inst._setChoosedPai = view.DesktopMgr.Inst.setChoosedPai;
-                view.DesktopMgr.Inst.setChoosedPai = function (e) {
-                    view.DesktopMgr.Inst._setChoosedPai(e);
-                    if (e !== null){
-                        helper.warningDiscards(e);
-                    }
-                }
-                */
-            } else setTimeout(() => {
-                // console.log("Majsoul Helper waiting...");
-                this.inject();
-            }, 1000);
-            // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
-            // uiscript.UI_PiPeiYuYue.Inst.addMatch(2);
-        }
-        injectUI () {
-            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(this.injectUI, 1000);
-            console.log("Majsoul UIScript injected.")
-            let e = uiscript;
-            let o = uiscript.UI_DesktopInfo;
-            uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
-                void 0 === e && (e = !1);
-                view.DesktopMgr.Inst.seat;
-                for (var t = view.DesktopMgr.Inst.player_datas, i = 0; i < 4; i++) {
-                    var n = view.DesktopMgr.Inst.localPosition2Seat(i),
-                        a = this._player_infos[i];
-                    if (n < 0) a.container.visible = !1;
-                    else {
-                        if (a.container.visible = !0,
-                            a.name.text = t[n].nickname,
-                            a.head.id = t[n].avatar_id,
-                            a.avatar = t[n].avatar_id,
-                            a.head.setEmo(""),
-                            a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
-                            a.level.id = t[n].level.id,
-                            0 != i) {
-                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
-                                o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
-                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
-                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
-                        }
-                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
-                    }
-                }
-            }
-            for (let i = 5; i <= 8; i++) {
-                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
-                    type: "Image",
-                    props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
-                    child: [{
-                        type: "Image",
-                        props: { y: 0, x: 0, skin: "myres/rank_bg.png", name: "bg" }
-                    }, {
-                        type: "Image",
-                        props: { y: 15, x: 0, skin: "extendRes/level/queshi.png", name: "icon" }
-                    }, {
-                        type: "Image",
-                        props: {
-                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
-                        child: [{
-                            type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
-                        }]
-                    }, {
-                        type: "Image",
-                        props: { y: 142, x: 29, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star3", anchorY: .5, anchorX: .5 },
-                        child: [{
-                            type: "Image",
-                            props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
-                        }]
-                    }, {
-                        type: "Image",
-                        props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
-                        child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
-                    }]
-                }
-
-            }
-            return true;
-        }
-        handToString() {
-            const handIn = view.DesktopMgr.Inst.mainrole.hand;
-            let strOut = "";
-            for (const tileInGameIn of handIn) {
-                strOut += tileInGameIn.val.toString();
-            }
-            return tenhou.MPSZ.contract(strOut);
-        }
-        analyseOperation(e) {
-            const action = e.msg;
-            if (action.hasOwnProperty("md5")) {
-                setTimeout(() => {
-                    view.DesktopMgr.Inst.setAutoHule(true);
-                    uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autohu"), 1);
-                    if (this.auto) {
-                        view.DesktopMgr.Inst.setAutoNoFulu(true);
-                        uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autonoming"), 1);
-                    }
-                }, 2000)
-            }
-            if (action.moqie){
-                var dtile =null;
-                for (var j = 0; j < 4; j++){
-                    if (view.DesktopMgr.Inst.players[j].seat == action.seat) {
-                        dtile = view.DesktopMgr.Inst.players[j].container_qipai.last_pai;
-                    }
-                }
-                dtile.ismoqie = true;
-                dtile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
-            }
-            if (action.hasOwnProperty("operation")) {
-                const operations = action.operation;
-                if (this.auto) {
-                    for (const operation of operations.operation_list) {
-                        if (operation.type == 7) {
-                            console.log("Riichi");
-                            view.DesktopMgr.Inst.mainrole.during_liqi = true;
-                        }
-                    }
-                }
-                for (const operation of operations.operation_list) {
-                    if (operation.type == 1) {
-                        const handTiles = this.handToString();
-                        const optionsIn = this.analyseHand(handTiles);
-                        const options = [];
-                        optionsIn.forEach(option => option && option.n ? options.push(option) : null);
-                        // let discard = handTiles.slice(-2, 2);
-                        // let discard2 = discard;
-
-                        this.handleDiscards(options);
-
-                        options.sort((a, b) => b.n - a.n);
-                        // console.log(JSON.stringify(options));
-                        var maxn = options[0].n;
-                        for (var i = 0; i < options.length; i++){
-                            if ((options[i].n < maxn * 0.8 && i > 0) || options[i].n == 0) break;
-                            var discard = tenhou.MPSZ.fromHai136(options[i].da * 4 + 1);
-                            const color = Math.pow(3.7 - 3.5 * options[i].n / maxn, 0.5);
-                            this.getFromHand(discard).forEach(tile => {
-                                tile._SetColor(new Laya.Vector4(color, 1, color, 1));
-                                setTimeout(() => tile._SetColor(new Laya.Vector4(color, 1, color, 1)), 750);
-                            });
-                        }
-
-                        //if (options[0]) discard = tenhou.MPSZ.fromHai136(options[0].da * 4 + 1);
-                        //if (options[1]) discard2 = tenhou.MPSZ.fromHai136(options[1].da * 4 + 1);
-                        //this.getFromHand(discard).forEach(tile => {
-                        //    tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1));
-                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.6, 1, 0.6, 1)), 750);
-                        //});
-                        //this.getFromHand(discard2).forEach(tile => {
-                        //    tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1));
-                        //    setTimeout(() => tile._SetColor(new Laya.Vector4(0.8, 1, 0.8, 1)), 750);
-                        //});
-                        //console.log(handTiles + " => " + discard);
-                        if (this.auto) this.discard(tenhou.MPSZ.fromHai136(options[0].da * 4 + 1));
-                    }
-                }
-            }
-        }
-
-        handleDiscards(options){
-            var dic = {};
-            for (const player of view.DesktopMgr.Inst.players){
-				for (const pair of player.container_qipai.pais){
-					const str = pair.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-				}
-                const lastpai = player.container_qipai.last_pai;
-                if (lastpai !== null) {
-                    const str = lastpai.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-                }
-                for (const pair of player.container_ming.pais){
-					const str = pair.val.toString();
-					if (dic[str] === undefined) dic[str] = 1;
-					else dic[str]++;
-				}
-			}
-			for (const opt of options){
-				for (const v of opt.v){
-                    const vs = tenhou.MPSZ.fromHai136(v * 4 + 1);
-					if (dic[vs] !== undefined) opt.n -= dic[vs];
-				}
-			}
-        }
-        analyseHand(tilesIn) {
-            const restc = (tiles, c34) => {
-                let n = 0;
-                for (let i = 0; i < tiles.length; ++i)
-                    n += 4 - c34[tiles[i]];
-                return n;
-            };
-            const tiles = tenhou.MPSZ.expand(tilesIn);
-            const c = tenhou.MPSZ.exextract34(tiles);
-            const syanten_org = tenhou.SYANTEN.calcSyanten2(c, 34)[0];
-            const options = new Array(35);
-            if (syanten_org == -1)
-                console.log("agari");
-            if (syanten_org == 0) {
-                const c_enum_machi34 = (c) => {
-                    const r = [];
-                    for (let i = 0; i < 34; ++i) {
-                        if (c[i] >= 4)
-                            continue;
-                        c[i]++; // 摸
-                        if (tenhou.AGARI.isAgari(c))
-                            r.push(i);
-                        c[i]--;
-                    }
-                    return r;
-                };
-                for (let i = 0; i < 34; ++i) { // 遍历打/摸
-                    if (!c[i])
-                        continue;
-                    c[i]--; // 打
-                    options[i] = c_enum_machi34(c);
-                    c[i]++;
-                    if (options[i].length)
-                        options[i] = { da: i, n: restc(options[i], c), v: options[i] };
-                }
-            }
-            else {
-                for (let i = 0; i < 34; ++i) {
-                    if (!c[i])
-                        continue;
-                    c[i]--; // 打
-                    options[i] = [];
-                    for (let j = 0; j < 34; ++j) {
-                        if (i == j || c[j] >= 4)
-                            continue;
-                        c[j]++; // 摸
-                        if (tenhou.SYANTEN.calcSyanten2(c, 34)[0] == syanten_org - 1)
-                            options[i].push(j);
-                        c[j]--;
-                    }
-                    c[i]++;
-                    if (options[i].length)
-                        options[i] = { da: i, n: restc(options[i], c), v: options[i] };
-                }
-            }
-            return options;
-        }
-        discard(tileIn) {
-            const mainrole = view.DesktopMgr.Inst.mainrole;
-            const handIn = mainrole.hand;
-            for (let i = 0; i < handIn.length; i++) {
-                const tile = handIn[i];
-                if (tile.val.toString() == tileIn) {
-                    mainrole._choose_pai = handIn[i]; // setChoosePai
-                    mainrole.DoDiscardTile();
-                    return;
-                }
-            }
-            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
-            for (let i = 0; i < handIn.length; i++) {
-                const tile = handIn[i];
-                if (tile.val.toString() == tileIn) {
-                    mainrole._choose_pai = handIn[i]; // setChoosePai
-                    mainrole.DoDiscardTile();
-                    return;
-                }
-            }
-        }
-        getFromHand(tileIn) {
-            const mainrole = view.DesktopMgr.Inst.mainrole;
-            const handIn = mainrole.hand;
-            const result = [];
-            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
-            if (tileIn.substr(0, 1) == "5") tileIn = tileIn.replace("5", "0");
-            handIn.forEach(tile => tile.val.toString() == tileIn ? result.push(tile) : null);
-            return result;
-        }
-    }
+    window.Helper = Helper;
     window.helper = new Helper();
     window.AddRoom = class AddRoom {
         constructor(idIn) {
