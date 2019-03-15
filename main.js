@@ -88,6 +88,12 @@
                 if (e !== null) this.dyeRiver(e); // override rendering
                 return r;
             }
+            uiscript.UI_DesktopInfo.prototype.btn_seeinfo = function(t) {
+                //if (view.DesktopMgr.Inst.mode != view.EMJMode.paipu && view.DesktopMgr.Inst.gameing) {
+                var i = view.DesktopMgr.Inst.player_datas[view.DesktopMgr.Inst.localPosition2Seat(t)].account_id;
+                0 != i && uiscript.UI_OtherPlayerInfo.Inst.show(i)
+                //}
+            }
             uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
                 void 0 === e && (e = !1);
                 view.DesktopMgr.Inst.seat;
@@ -104,7 +110,7 @@
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
                             a.level.id = t[n].level.id,
                             0 != i) {
-                            var r = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
+                            var r = true,// t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
                                 o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
                                 s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
                             e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
