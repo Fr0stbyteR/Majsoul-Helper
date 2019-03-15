@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.7
+// @version      0.3.8
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -393,7 +393,7 @@
                 }
                 const r = Math.max(0, rate ** 3 * -1) * 0.6;
                 const g = Math.max(0, rate ** 3) * 0.6;
-                tile._SetColor(new Laya.Vector4(1 - g, 1 - r, 1 - r - g, 1));
+                if (this._handHelper) tile._SetColor(new Laya.Vector4(1 - g, 1 - r, 1 - r - g, 1));
             });
             return option;
         }
