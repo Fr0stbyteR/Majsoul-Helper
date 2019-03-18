@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.8
+// @version      0.3.9
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -164,8 +164,10 @@
             b.style.right = "0px";
             b.style.zIndex = 1000;
             b.addEventListener("click", () => {
-                this.window = window.open("about:blank", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=380,height=380");
+                this.window = window.open("", "雀魂辅助", "directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=380,height=380");
                 const d = this.window.document;
+                d.body.innerHTML = "";
+                d.head.innerHTML = "";
                 d.write(`
                     <html>
                         <head>
