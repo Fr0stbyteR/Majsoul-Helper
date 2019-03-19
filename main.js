@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.3.9
+// @version      0.4.0
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -39,7 +39,7 @@
             if (i == 0) {
                 for (let i = 0; i <= 3; i++) {
                     const player = view.DesktopMgr.Inst.players[i];
-                    const tiles = player.container_qipai.pais;
+                    const tiles = player.container_qipai.pais.slice();
                     if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
                     tiles.forEach(tile => {
                         if (tile.ismoqie) {
@@ -52,7 +52,7 @@
             } else {
                 for (let i = 0; i <= 3; i++) {
                     const player = view.DesktopMgr.Inst.players[i];
-                    const tiles = player.container_qipai.pais;
+                    const tiles = player.container_qipai.pais.slice();
                     if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
                     tiles.forEach(tile => {
                         if (tile._ismoqie) {
