@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.0
+// @version      0.4.1
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -65,7 +65,7 @@
             }
         }
         inject() {
-            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof ui === "undefined" || !ui.mj.desktopInfoUI.uiView) return setTimeout(() => this.inject(), 1000);
+            if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof Laya.View.uiMap === "undefined" || !Laya.View.uiMap["mj/desktopInfo"]) return setTimeout(() => this.inject(), 1000);
             if (typeof view === "undefined" || !view.DesktopMgr || !view.DesktopMgr.prototype) return setTimeout(() => this.inject(), 1000);
             const actionsToInject = { ActionAnGangAddGang: 700, ActionBabei: 700, ActionChiPengGang: 700, ActionDealTile: 200, ActionDiscardTile: 500, ActionNewRound: 1500 };// as { [key: string]: number } // inject with proper timeout
             for (const key in actionsToInject) {
@@ -120,7 +120,7 @@
                 }
             }
             for (let i = 5; i <= 8; i++) {
-                ui.mj.desktopInfoUI.uiView.child[i].child[3].child[1] = {
+                Laya.View.uiMap["mj/desktopInfo"].child[i].child[3].child[1] = {
                     type: "Image",
                     props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
                     child: [{
@@ -150,7 +150,6 @@
                         child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
                     }]
                 }
-
             }
             console.log("Majsoul Helper injected.");
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
@@ -915,6 +914,7 @@
                 switch (a) {
                     case 4:
                         mmmm <<= 8, mmmm |= (col * 7 + i + 1), b += 1, c += 1; // nobreak // 平和二盃口が三暗刻より高目
+                        break;
                     case 3: // 帯幺九系が高目、ロン平和一盃口以外は三暗刻が高目
                         if (((m >> 3) & 7) >= 3 + b && ((m >> 6) & 7) >= 3 + c) s = i, b += 3, c += 3; // 三連刻
                         else mmmm <<= 8, mmmm |= (21 + col * 9 + i + 1);
