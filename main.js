@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.1
+// @version      0.4.2
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -279,7 +279,7 @@
                         this.defenseInfo.chang = view.DesktopMgr.Inst.index_change;
                         this.defenseInfo.ju = view.DesktopMgr.Inst.index_ju;
                         const option = this.analyseHand();
-                        if (this.auto && option) setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
+                        if (this.auto && typeof option === "number") setTimeout(() => this.discard(Helper.indexToString(option)), Math.random() * 2000 + 1000);
                     }
                 }
             }
