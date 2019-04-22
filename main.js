@@ -1464,7 +1464,7 @@
         }
         start() {
             this.stop();
-            this.timer = setTimeout(() => this.start(), 250);
+            this.timer = setTimeout(() => this.joinRoom(this.id), 250);
             return this;
         }
         stop() {
