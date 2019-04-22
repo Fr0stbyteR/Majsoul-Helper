@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.2
+// @version      0.4.3
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
+// @match        https://game.mahjongsoul.com/
 // @grant        none
 // ==/UserScript==
 
@@ -1472,12 +1473,11 @@
         }
     }
     window.getCharacter = () => {
-        uiscript.UI_Sushe.characters[2] = { charid: 200003, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400301 };
-        uiscript.UI_Sushe.characters[3] = { charid: 200004, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400401 };
-        uiscript.UI_Sushe.characters[4] = { charid: 200005, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400501 };
-        uiscript.UI_Sushe.characters[5] = { charid: 200006, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400601 };
-        uiscript.UI_Sushe.characters[6] = { charid: 200007, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400701 };
-        uiscript.UI_Sushe.characters[7] = { charid: 200008, exp: 20000, extra_emoji: [13], is_upgraded: true, level: 5, skin: 400801 };
+        for (let i = 0; i <= 7; i++) {
+            uiscript.UI_Sushe.characters[i] = { charid: 200001 + i, exp: 20000, extra_emoji: [10, 11, 12, 13], is_upgraded: true, level: 5, skin: 400102 + i * 100 };
+            uiscript.UI_Sushe.skin_map[400102 + i * 100] = 1;
+            uiscript.UI_Sushe.skin_map[400101 + i * 100] = 1;
+        }
     }
     // Events overRiding
     // Operations : 0 = "none", 1 = "dapai", 2 = "eat", 3 = "peng", 4 = "an_gang", 5 = "ming_gang", 6 = "add_gang", 7 = "liqi", 8 = "zimo", 9 = "rong", 10 = "jiuzhongjiupai", 11 = "babei"
