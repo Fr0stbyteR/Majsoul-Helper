@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.4
+// @version      0.4.5
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://majsoul.union-game.com/0/
@@ -122,7 +122,7 @@
                 }
             }
             for (let i = 5; i <= 8; i++) {
-                Laya.View.uiMap["mj/desktopInfo"].child[i].child[3].child[1] = {
+                Laya.View.uiMap["mj/desktopInfo"].child[i].child[2].child[1] = {
                     type: "Image",
                     props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
                     child: [{
