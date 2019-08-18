@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.5
+// @version      0.4.7
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
-// @match        https://majsoul.union-game.com/0/
+// @match        https://www.majsoul.com/*
+// @match        https://majsoul.union-game.com/
 // @match        https://game.mahjongsoul.com/
 // @match        https://mahjongsoul.game.yo-star.com/
 // @grant        none
@@ -1474,15 +1475,16 @@
         }
     }
     window.getCharacter = () => {
-        for (let i = 0; i <= 7; i++) {
+        for (let i = 0; i <= 16; i++) {
             const $ = uiscript.UI_Sushe.characters.findIndex(char => char.charid === 200001 + i);
             if ($ === -1) {
-                uiscript.UI_Sushe.characters.push({ charid: 200001 + i, exp: 20000, extra_emoji: [10, 11, 12, 13], is_upgraded: true, level: 5, skin: 400102 + i * 100 });
+                uiscript.UI_Sushe.characters.push({ ...uiscript.UI_Sushe.characters[200001], charid: 200001 + i, exp: 20000, extra_emoji: [10, 11, 12, 13], is_upgraded: true, level: 5, skin: 400101 + i * 100 });
             } else {
-                uiscript.UI_Sushe.characters[$] = { charid: 200001 + i, exp: 20000, extra_emoji: [10, 11, 12, 13], is_upgraded: true, level: 5, skin: 400102 + i * 100 };
+                uiscript.UI_Sushe.characters[$] = { ...uiscript.UI_Sushe.characters[$], charid: 200001 + i, exp: 20000, extra_emoji: [10, 11, 12, 13], is_upgraded: true, level: 5, skin: 400101 + i * 100 };
             }
-            uiscript.UI_Sushe.skin_map[400102 + i * 100] = 1;
-            uiscript.UI_Sushe.skin_map[400101 + i * 100] = 1;
+        }
+        for (const id in cfg.item_definition.skin.map_) {
+            uiscript.UI_Sushe.skin_map[id] = 1;
         }
     };
     // Events overRiding
