@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.7
+// @version      0.4.8
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -1466,11 +1466,11 @@
         }
         start() {
             this.stop();
-            this.timer = setTimeout(() => this.joinRoom(this.id), 250);
+            this.timer = setInterval(() => this.joinRoom(this.id), 250);
             return this;
         }
         stop() {
-            if (this.timer) clearTimeout(this.timer);
+            if (this.timer) clearInterval(this.timer);
             return this;
         }
     }
