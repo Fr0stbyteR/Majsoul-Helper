@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.8
+// @version      0.4.9
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -109,7 +109,7 @@
                             a.name.text = t[n].nickname,
                             a.head.id = t[n].avatar_id,
                             a.avatar = t[n].avatar_id,
-                            a.head.setEmo(""),
+                            a.head.head_frame = t[n].avatar_frame,
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
                             a.level.id = t[n].level.id,
                             0 != i) {
@@ -118,12 +118,12 @@
                                 s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
                             e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
                         }
-                        t[n].title ? a.title.id = t[n].title : a.title.id = 0
+                        t[n].title ? a.title.id = game.Tools.titleLocalization(t[n].account_id, t[n].title) : a.title.id = 0
                     }
                 }
             }
             for (let i = 5; i <= 8; i++) {
-                Laya.View.uiMap["mj/desktopInfo"].child[i].child[2].child[1] = {
+                Laya.View.uiMap["mj/desktopInfo"].child[i].child[2].child.push({
                     type: "Image",
                     props: { y: -10, x: -10, name: "level", scaleY: .5, scaleX: .5 },
                     child: [{
@@ -152,7 +152,7 @@
                         props: { y: 214, x: 110, skin: "myres/starbg.png", scaleY: .7, scaleX: .7, name: "star1", anchorY: .5, anchorX: .5 },
                         child: [{ type: "Image", props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 } }]
                     }]
-                }
+                })
             }
             console.log("Majsoul Helper injected.");
             // uiscript.UI_GameEnd.prototype.show = () => game.Scene_MJ.Inst.GameEnd();
