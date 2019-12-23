@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.9
+// @version      0.4.10
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -59,7 +59,7 @@
                     if (player.container_qipai.last_pai !== null) tiles.push(player.container_qipai.last_pai);
                     tiles.forEach(tile => {
                         if (tile._ismoqie) {
-                            tile.ismoqie = tile._ismoqie; 
+                            tile.ismoqie = tile._ismoqie;
                             tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
                             delete tile._ismoqie;
                         }
@@ -107,6 +107,7 @@
                     else {
                         if (a.container.visible = !0,
                             a.name.text = t[n].nickname,
+                            game.Tools.SetNickname(a.name, t[n].nickname, t[n].verified),
                             a.head.id = t[n].avatar_id,
                             a.avatar = t[n].avatar_id,
                             a.head.head_frame = t[n].avatar_frame,
@@ -254,7 +255,7 @@
                 if (action.is_liqi || action.is_wliqi) this.defenseInfo.riichiPlayers.push(action.seat);
                 if (action.moqie) {
                     if (this._riverHelper) {
-                        tile.ismoqie = true; 
+                        tile.ismoqie = true;
                         tile.model.meshRender.sharedMaterial.setColor(caps.Cartoon.COLOR, new Laya.Vector4(0.8, 0.8, 0.8, 1));
                     } else {
                         tile._ismoqie = true;
@@ -402,7 +403,7 @@
             return option;
         }
         static evaluateAttack(hand, mountain) { // as number[34]
-            const restc = waitings => { // : number, 
+            const restc = waitings => { // : number,
                 let rest = 0;
                 waitings.forEach(tileIndex => rest += mountain[tileIndex]);
                 return rest;
