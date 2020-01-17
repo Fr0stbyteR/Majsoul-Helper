@@ -30,7 +30,7 @@
 #### 1.x版本
 - 在 **resources\app\execute** 中新建文件夹
 - 将 **execute.json** 、 **main.js** 文件复制到该文件夹
-#### 2.x版本
+#### 2.x版本（未经过充分测试）
 - 在 **resources\app\extension** 中新建文件夹，并设置文件夹的名字为任意英文数字字符串
 - 将 **extension.json** 、 **main.js** 文件复制到该文件夹
 - 打开 **extension.json** ，在文件开头的 **"id":** 处填写文件夹的名字，保存
