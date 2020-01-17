@@ -27,8 +27,13 @@
 - 导入 **main.js** 或打开 [此链接](https://greasyfork.org/scripts/378059-majsoul-helper) 安装脚本
 
 ### 安装方法 - Majsoul Plus
+#### 1.x版本
 - 在 **resources\app\execute** 中新建文件夹
 - 将 **execute.json** 、 **main.js** 文件复制到该文件夹
+#### 2.x版本（未经过充分测试）
+- 在 **resources\app\extension** 中新建文件夹，并设置文件夹的名字为任意英文数字字符串
+- 将 **extension.json** 、 **main.js** 文件复制到该文件夹
+- 打开 **extension.json** ，在文件开头的 **"id":** 处填写文件夹的名字，保存
 
 ### 使用方法
 - 单击右下角按钮打开控制界面
