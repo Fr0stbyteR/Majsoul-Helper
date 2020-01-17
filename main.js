@@ -234,9 +234,9 @@
         analyse(key, action, mType) {
             this.calcMountain();
             if (mType !== "play") return;
+            view.DesktopMgr.bianjietishi = true;
             if (key == "ActionNewRound") {
                 view.DesktopMgr.Inst.setAutoHule(true);
-                view.DesktopMgr.bianjietishi = true;
                 uiscript.UIMgr.Inst._ui_desktop.refreshFuncBtnShow(uiscript.UIMgr.Inst._ui_desktop._container_fun.getChildByName("btn_autohu"), 1);
                 if (this.auto) {
                     view.DesktopMgr.Inst.setAutoNoFulu(true);
