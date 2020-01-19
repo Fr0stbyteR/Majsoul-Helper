@@ -17,6 +17,8 @@
 
 5. 显示玩家段位
 
+6. 在任何情况下开启便捷提示 by [@purerosefallen](https://github.com/purerosefallen)
+
   ![Demo](./example1.png)
   ![Demo](./example2.png)
   ![Demo](./example3.png)
@@ -30,7 +32,7 @@
 #### 1.x版本
 - 在 **resources\app\execute** 中新建文件夹
 - 将 **execute.json** 、 **main.js** 文件复制到该文件夹
-#### 2.x版本（未经过充分测试）
+#### 2.x版本（未经过充分测试）by [@TanakaKotoha](https://github.com/TanakaKotoha)
 - 在 **resources\app\extension** 中新建文件夹，并设置文件夹的名字为任意英文数字字符串
 - 将 **extension.json** 、 **main.js** 文件复制到该文件夹
 - 打开 **extension.json** ，在文件开头的 **"id":** 处填写文件夹的名字，保存
