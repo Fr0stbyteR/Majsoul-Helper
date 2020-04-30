@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.12
+// @version      0.4.13
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -106,9 +106,14 @@
                     if (n < 0) a.container.visible = !1;
                     else {
                         a.container.visible = !0;
-                        var r = view.DesktopMgr.Inst.getPlayerName(n);
-                        if (game.Tools.SetNickname(a.name, r),
-                            a.head.id = t[n].avatar_id,
+                        try {
+                            var r = view.DesktopMgr.Inst.getPlayerName(n);
+                            game.Tools.SetNickname(a.name, r);
+                        } catch(e) {
+                            a.name.text = t[n].nickname;
+                            game.Tools.SetNickname(a.name, t[n]);
+                        }
+                            if (a.head.id = t[n].avatar_id,
                             a.avatar = t[n].avatar_id,
                             a.head.head_frame = t[n].avatar_frame,
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
