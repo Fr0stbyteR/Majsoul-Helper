@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.10
+// @version      0.4.13
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -105,19 +105,24 @@
                         a = this._player_infos[i];
                     if (n < 0) a.container.visible = !1;
                     else {
-                        if (a.container.visible = !0,
-                            a.name.text = t[n].nickname,
-                            game.Tools.SetNickname(a.name, t[n].nickname, t[n].verified),
-                            a.head.id = t[n].avatar_id,
+                        a.container.visible = !0;
+                        try {
+                            var r = view.DesktopMgr.Inst.getPlayerName(n);
+                            game.Tools.SetNickname(a.name, r);
+                        } catch(e) {
+                            a.name.text = t[n].nickname;
+                            game.Tools.SetNickname(a.name, t[n]);
+                        }
+                            if (a.head.id = t[n].avatar_id,
                             a.avatar = t[n].avatar_id,
                             a.head.head_frame = t[n].avatar_frame,
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
                             a.level.id = t[n].level.id,
                             0 != i) {
-                            var r = t[n].account_id && 0 != t[n].account_id,// && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
+                            var s = t[n].account_id && 0 != t[n].account_id,// && view.DesktopMgr.Inst.mode != view.EMJMode.paipu,
                                 o = t[n].account_id && 0 != t[n].account_id && view.DesktopMgr.Inst.mode == view.EMJMode.play,
-                                s = view.DesktopMgr.Inst.mode != view.EMJMode.play;
-                            e ? a.headbtn.onChangeSeat(r, o, s) : a.headbtn.reset(r, o, s)
+                                l = view.DesktopMgr.Inst.mode != view.EMJMode.play;
+                            e ? a.headbtn.onChangeSeat(s, o, l) : a.headbtn.reset(s, o, l)
                         }
                         t[n].title ? a.title.id = game.Tools.titleLocalization(t[n].account_id, t[n].title) : a.title.id = 0
                     }

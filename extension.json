@@ -1,0 +1,9 @@
+{
+  "id": "",
+  "version": "1.0.1",
+  "name": "雀魂辅助",
+  "author": ["Fr0stbyteR"],
+  "description": "帮助有眼疾的科学麻将选手看清场况、理性打牌。",
+  "preview": "preview.jpg",
+  "entry": "main.js"
+}
