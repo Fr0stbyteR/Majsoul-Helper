@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.14
+// @version      0.4.15
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -115,8 +115,8 @@
                             game.Tools.SetNickname(a.name, t[n]);
                         }
                             if (a.head.id = t[n].avatar_id,
+                            a.head.set_head_frame(t[n].account_id, t[n].avatar_frame),
                             a.avatar = t[n].avatar_id,
-                            a.head.head_frame = t[n].avatar_frame,
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
                             a.level.id = t[n].level.id,
                             0 != i) {
