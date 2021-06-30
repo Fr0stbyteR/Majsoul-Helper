@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Majsoul Helper
 // @namespace    https://github.com/Fr0stbyteR/
-// @version      0.4.15
+// @version      0.4.16
 // @description  dye recommended discarding tile with tenhou/2 + River tiles indication
 // @author       Fr0stbyteR, FlyingBamboo
 // @match        https://www.majsoul.com/*
@@ -78,8 +78,8 @@
                 const mToInject = ["play", "fastplay", "record", "fastrecord"];
                 mToInject.forEach(mType => {
                     const m = action[mType].bind(action);
-                    action[mType] = action => {
-                        const r = m(action);
+                    action[mType] = (action, ...rest) => {
+                        const r = m(action, ...rest);
                         setTimeout(() => this.analyse(key, action, mType), delay + (key === "ActionNewRound" && action.al ? 1300 : 0));
                         // console.log(action);
                         return r;
@@ -87,8 +87,8 @@
                 })
             }
             const m = view.DesktopMgr.prototype.setChoosedPai;
-            view.DesktopMgr.prototype.setChoosedPai = e => {
-                const r = m.call(view.DesktopMgr.Inst, e); // render normally
+            view.DesktopMgr.prototype.setChoosedPai = (e, ...rest) => {
+                const r = m.call(view.DesktopMgr.Inst, e, ...rest); // render normally
                 if (e !== null) this.dyeRiver(e); // override rendering
                 return r;
             }
