@@ -22,7 +22,8 @@
             this.resetDefenseInfo();
         }
         reset() {
-            this.auto = false;
+            this._auto = !!localStorage.auto;
+            // this._infiniteTime = !!localStorage.infiniteTime;
             this._handHelper = +localStorage.handHelper || 0;
             this._riverHelper = +localStorage.riverHelper || 0;
             this.mountain = new Array(34).fill(4);
@@ -30,11 +31,17 @@
         resetDefenseInfo() {
             this.defenseInfo = { mySeat: 0, river: [[], [], [], []], riichiPlayers: [], fuuro: [[], [], [], []], chang: 0, ju: 0 };
         }
+        get handHelper() {
+            return this._handHelper;
+        }
         set handHelper(i) {
             this._handHelper = i;
             localStorage.handHelper = i;
             if (i == 0 && view.DesktopMgr.Inst && view.DesktopMgr.Inst.mainrole.hand.length) view.DesktopMgr.Inst.mainrole.hand.forEach(tile => tile._SetColor(new Laya.Vector4(1, 1, 1, 1)));
             if (i > 0) this.analyseHand();
+        }
+        get riverHelper() {
+            return this._riverHelper;
         }
         set riverHelper(i) {
             this._riverHelper = i;
@@ -68,6 +75,34 @@
                 }
             }
         }
+
+        get auto() {
+            return this._auto;
+        }
+
+        set auto(i) {
+            this._auto = i;
+            localStorage.auto = i;
+        }
+
+        /*
+        get infiniteTime() {
+            return this._infiniteTime;
+        }
+
+        set infiniteTime(i) {
+            this._infiniteTime = i;
+            localStorage.infiniteTime = i;
+            this.setInfiniteTime();
+        }
+
+        setInfiniteTime() {
+            if (!uiscript || !uiscript.UI_DesktopInfo || !uiscript.UI_DesktopInfo.Inst || !uiscript.UI_DesktopInfo.Inst._timecd) return;
+            const presetTime = Math.floor(Math.random() * 3);
+            Object.defineProperty(uiscript.UI_DesktopInfo.Inst._timecd, "timeuse", { get: function () { return presetTime; }, enumerable: false, configurable: true });
+        }
+        */
+
         inject() {
             if (typeof uiscript === "undefined" || !uiscript.UI_DesktopInfo || typeof Laya.View.uiMap === "undefined" || !Laya.View.uiMap["mj/desktopInfo"]) return setTimeout(() => this.inject(), 1000);
             if (typeof view === "undefined" || !view.DesktopMgr || !view.DesktopMgr.prototype) return setTimeout(() => this.inject(), 1000);
@@ -86,16 +121,21 @@
                     }
                 })
             }
+
+            //if (this.infiniteTime) {
+            //    this.setInfiniteTime();
+            //}
+
             const m = view.DesktopMgr.prototype.setChoosedPai;
             view.DesktopMgr.prototype.setChoosedPai = (e, ...rest) => {
                 const r = m.call(view.DesktopMgr.Inst, e, ...rest); // render normally
                 if (e !== null) this.dyeRiver(e); // override rendering
                 return r;
             }
-            uiscript.UI_DesktopInfo.prototype.btn_seeinfo = function(t) {
+            uiscript.UI_DesktopInfo.prototype.btn_seeinfo = function (t) {
                 //if (view.DesktopMgr.Inst.mode != view.EMJMode.paipu && view.DesktopMgr.Inst.gameing) {
                 var i = view.DesktopMgr.Inst.player_datas[view.DesktopMgr.Inst.localPosition2Seat(t)].account_id;
-                i  && 0 != i && uiscript.UI_OtherPlayerInfo.Inst.show(i)
+                i && 0 != i && uiscript.UI_OtherPlayerInfo.Inst.show(i)
                 //}
             }
             uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
@@ -110,11 +150,11 @@
                         try {
                             var r = view.DesktopMgr.Inst.getPlayerName(n);
                             game.Tools.SetNickname(a.name, r);
-                        } catch(e) {
+                        } catch (e) {
                             a.name.text = t[n].nickname;
                             game.Tools.SetNickname(a.name, t[n]);
                         }
-                            if (a.head.id = t[n].avatar_id,
+                        if (a.head.id = t[n].avatar_id,
                             a.head.set_head_frame(t[n].account_id, t[n].avatar_frame),
                             a.avatar = t[n].avatar_id,
                             a.level = new uiscript.UI_Level(this.me.getChildByName("container_player_" + i).getChildByName("head").getChildByName("level")),
@@ -142,7 +182,8 @@
                     }, {
                         type: "Image",
                         props: {
-                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5 },
+                            y: 191, x: 58, skin: "myres/starbg.png", scaleY: 1, scaleX: 1, name: "star2", anchorY: .5, anchorX: .5
+                        },
                         child: [{
                             type: "Image",
                             props: { y: 26, x: 27, skin: "myres/star.png", anchorY: .5, anchorX: .5 }
@@ -218,6 +259,11 @@
                                     <input type="radio" id="river2" value="2" name="river"${this._riverHelper === 2 ? " checked" : ""}>
                                     <label>开启</label>
                                 </div>
+                                <div>
+                                    <span>特殊</span>
+                                    <input type="checkbox" id="chkAuto"${this.auto ? " checked" : ""}>
+                                    <label>自动摸打</label>
+                                </div>
                             </div>
                         </body>
                     </html>
@@ -233,6 +279,8 @@
                 }
                 ["hand0", "hand1", "hand2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.handHelper = +e.target.value));
                 ["river0", "river1", "river2"].forEach(str => d.getElementById(str).addEventListener("click", e => this.riverHelper = +e.target.value));
+                d.getElementById("chkAuto").addEventListener("click", e => this.auto = e.target.checked);
+                // d.getElementById("chkInfiniteTime").addEventListener("click", e => this.infiniteTime = e.target.checked);
             })
             document.body.appendChild(b);
             window.addEventListener("beforeunload", () => this.window.close());
@@ -344,19 +392,19 @@
                 this.defenseInfo.fuuro[seat] = [];
                 const reinitRiver = player.container_qipai.pais.length && !this.defenseInfo.river[seat].length ? true : false;
                 if (reinitRiver) this.defenseInfo.river[seat] = [];
-				for (const tile of player.container_qipai.pais) {
-					visibleTiles.push(tile.val.toString());
-                    if (reinitRiver) this.defenseInfo.river[seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: []});
-				}
-				for (const tile of player.container_babei.pais) {
+                for (const tile of player.container_qipai.pais) {
                     visibleTiles.push(tile.val.toString());
-				}
+                    if (reinitRiver) this.defenseInfo.river[seat].push({ tileIndex: Helper.indexOfTile(tile.val.toString()), afterRiichi: [] });
+                }
+                for (const tile of player.container_babei.pais) {
+                    visibleTiles.push(tile.val.toString());
+                }
                 const lastTile = player.container_qipai.last_pai;
                 if (lastTile !== null) visibleTiles.push(lastTile.val.toString());
                 for (const tile of player.container_ming.pais) {
-					visibleTiles.push(tile.val.toString());
+                    visibleTiles.push(tile.val.toString());
                     this.defenseInfo.fuuro[seat].push(Helper.indexOfTile(tile.val.toString()));
-				}
+                }
             })
             view.DesktopMgr.Inst.mainrole.hand.forEach(tile => { // 自家手牌
                 visibleTiles.push(tile.val.toString());
@@ -770,10 +818,10 @@
             var ok = false;
             // 七対子 // １４枚のみ
             if (!(j & 10) && (
-                    (c[0] == 2) + (c[1] == 2) + (c[2] == 2) + (c[3] == 2) + (c[4] == 2) + (c[5] == 2) + (c[6] == 2) + (c[7] == 2) + (c[8] == 2) +
-                    (c[9] == 2) + (c[10] == 2) + (c[11] == 2) + (c[12] == 2) + (c[13] == 2) + (c[14] == 2) + (c[15] == 2) + (c[16] == 2) + (c[17] == 2) +
-                    (c[18] == 2) + (c[19] == 2) + (c[20] == 2) + (c[21] == 2) + (c[22] == 2) + (c[23] == 2) + (c[24] == 2) + (c[25] == 2) + (c[26] == 2) +
-                    (c[27] == 2) + (c[28] == 2) + (c[29] == 2) + (c[30] == 2) + (c[31] == 2) + (c[32] == 2) + (c[33] == 2)) == 7) {
+                (c[0] == 2) + (c[1] == 2) + (c[2] == 2) + (c[3] == 2) + (c[4] == 2) + (c[5] == 2) + (c[6] == 2) + (c[7] == 2) + (c[8] == 2) +
+                (c[9] == 2) + (c[10] == 2) + (c[11] == 2) + (c[12] == 2) + (c[13] == 2) + (c[14] == 2) + (c[15] == 2) + (c[16] == 2) + (c[17] == 2) +
+                (c[18] == 2) + (c[19] == 2) + (c[20] == 2) + (c[21] == 2) + (c[22] == 2) + (c[23] == 2) + (c[24] == 2) + (c[25] == 2) + (c[26] == 2) +
+                (c[27] == 2) + (c[28] == 2) + (c[29] == 2) + (c[30] == 2) + (c[31] == 2) + (c[32] == 2) + (c[33] == 2)) == 7) {
                 v[3].mmmm35 = 0xFFFFFFFF;
                 var i, n = 0;
                 for (i = 0; i < 34; ++i)
@@ -1081,10 +1129,10 @@
             if (((j & 3) == 2) && (c[0] * c[8] * c[9] * c[17] * c[18] * c[26] * c[27] * c[28] * c[29] * c[30] * c[31] * c[32] * c[33] == 2)) return true;
             // 七対子 // １４枚のみ
             if (!(j & 10) && (
-                    (c[0] == 2) + (c[1] == 2) + (c[2] == 2) + (c[3] == 2) + (c[4] == 2) + (c[5] == 2) + (c[6] == 2) + (c[7] == 2) + (c[8] == 2) +
-                    (c[9] == 2) + (c[10] == 2) + (c[11] == 2) + (c[12] == 2) + (c[13] == 2) + (c[14] == 2) + (c[15] == 2) + (c[16] == 2) + (c[17] == 2) +
-                    (c[18] == 2) + (c[19] == 2) + (c[20] == 2) + (c[21] == 2) + (c[22] == 2) + (c[23] == 2) + (c[24] == 2) + (c[25] == 2) + (c[26] == 2) +
-                    (c[27] == 2) + (c[28] == 2) + (c[29] == 2) + (c[30] == 2) + (c[31] == 2) + (c[32] == 2) + (c[33] == 2)) == 7) return true;
+                (c[0] == 2) + (c[1] == 2) + (c[2] == 2) + (c[3] == 2) + (c[4] == 2) + (c[5] == 2) + (c[6] == 2) + (c[7] == 2) + (c[8] == 2) +
+                (c[9] == 2) + (c[10] == 2) + (c[11] == 2) + (c[12] == 2) + (c[13] == 2) + (c[14] == 2) + (c[15] == 2) + (c[16] == 2) + (c[17] == 2) +
+                (c[18] == 2) + (c[19] == 2) + (c[20] == 2) + (c[21] == 2) + (c[22] == 2) + (c[23] == 2) + (c[24] == 2) + (c[25] == 2) + (c[26] == 2) +
+                (c[27] == 2) + (c[28] == 2) + (c[29] == 2) + (c[30] == 2) + (c[31] == 2) + (c[32] == 2) + (c[33] == 2)) == 7) return true;
             // 一般系
             if (j & 2) return false; // 字牌が１枚
             var n00 = c[0] + c[3] + c[6],
