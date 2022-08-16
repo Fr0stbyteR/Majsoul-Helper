@@ -22,7 +22,7 @@
             this.resetDefenseInfo();
         }
         reset() {
-            this._auto = localStorage.auto === 1;
+            this._auto = localStorage.auto === 'true';
             // this._infiniteTime = !!localStorage.infiniteTime;
             this._handHelper = +localStorage.handHelper || 0;
             this._riverHelper = +localStorage.riverHelper || 0;
@@ -82,7 +82,7 @@
 
         set auto(i) {
             this._auto = i;
-            localStorage.auto = i ? 1 : 0;
+            localStorage.auto = i
         }
 
         /*
