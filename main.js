@@ -138,6 +138,7 @@
                 i && 0 != i && uiscript.UI_OtherPlayerInfo.Inst.show(i)
                 //}
             }
+            /*
             uiscript.UI_DesktopInfo.prototype.refreshSeat = function (e) {
                 void 0 === e && (e = !1);
                 view.DesktopMgr.Inst.seat;
@@ -169,6 +170,7 @@
                     }
                 }
             }
+            */
             for (let i = 5; i <= 8; i++) {
                 Laya.View.uiMap["mj/desktopInfo"].child[i].child[2].child.push({
                     type: "Image",
